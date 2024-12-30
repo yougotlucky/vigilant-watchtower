@@ -30,8 +30,9 @@ const CameraCard: React.FC<CameraCardProps> = ({ camera }) => {
 
     const connectStream = async () => {
       try {
-        // Replace with your RTSPtoWeb server address
-        const response = await fetch(`http://localhost:8083/stream/${camera.id}/webrtc`);
+        // Replace with your actual server address where RTSPtoWeb is running
+        const serverAddress = 'http://192.168.31.49:8083'; // Update this with your server IP
+        const response = await fetch(`${serverAddress}/stream/${camera.id}/webrtc`);
         const data = await response.json();
         
         if (data.error) {
@@ -64,7 +65,7 @@ const CameraCard: React.FC<CameraCardProps> = ({ camera }) => {
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
 
-        const result = await fetch(`http://localhost:8083/stream/${camera.id}/webrtc`, {
+        const result = await fetch(`${serverAddress}/stream/${camera.id}/webrtc`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
