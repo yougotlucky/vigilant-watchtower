@@ -3,12 +3,30 @@ import { Camera } from '@/types/camera';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Power, Camera as CameraIcon, AlertCircle } from 'lucide-react';
+import ReactPlayer from 'react-player';
+import { useToast } from '@/hooks/use-toast';
 
 interface CameraCardProps {
   camera: Camera;
 }
 
 const CameraCard: React.FC<CameraCardProps> = ({ camera }) => {
+  const { toast } = useToast();
+  const [isStreamError, setIsStreamError] = React.useState(false);
+
+  const handleStreamError = () => {
+    setIsStreamError(true);
+    toast({
+      variant: "destructive",
+      title: "Stream Error",
+      description: `${camera.name} stream is unavailable`,
+    });
+  };
+
+  const handleStreamStart = () => {
+    setIsStreamError(false);
+  };
+
   return (
     <Card className="bg-primary p-4 text-primary-foreground">
       <div className="flex justify-between items-start mb-4">
@@ -16,10 +34,10 @@ const CameraCard: React.FC<CameraCardProps> = ({ camera }) => {
           <h3 className="text-lg font-semibold">{camera.name}</h3>
           <div className="flex gap-2 mt-2">
             <Badge 
-              variant={camera.status === 'online' ? 'default' : 'destructive'}
-              className={camera.status === 'error' ? 'animate-pulse-warning' : ''}
+              variant={camera.status === 'online' && !isStreamError ? 'default' : 'destructive'}
+              className={camera.status === 'error' || isStreamError ? 'animate-pulse-warning' : ''}
             >
-              {camera.status.toUpperCase()}
+              {isStreamError ? 'STREAM ERROR' : camera.status.toUpperCase()}
             </Badge>
             {camera.powerStatus ? (
               <Badge variant="secondary">
@@ -40,18 +58,28 @@ const CameraCard: React.FC<CameraCardProps> = ({ camera }) => {
             )}
           </div>
         </div>
-        {camera.status === 'error' && (
+        {(camera.status === 'error' || isStreamError) && (
           <AlertCircle className="w-6 h-6 text-destructive animate-pulse-warning" />
         )}
       </div>
       <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
         {camera.status === 'online' ? (
-          <div className="absolute inset-0 bg-black">
-            {/* Stream component will be added here */}
-            <div className="flex items-center justify-center h-full text-muted-foreground">
-              <CameraIcon className="w-8 h-8" />
-            </div>
-          </div>
+          <ReactPlayer
+            url={camera.streamUrl}
+            width="100%"
+            height="100%"
+            playing={true}
+            controls={true}
+            onError={handleStreamError}
+            onStart={handleStreamStart}
+            config={{
+              file: {
+                attributes: {
+                  crossOrigin: "anonymous",
+                }
+              }
+            }}
+          />
         ) : (
           <div className="flex items-center justify-center h-full text-muted-foreground">
             <span>Stream Unavailable</span>
