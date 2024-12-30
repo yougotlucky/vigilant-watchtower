@@ -45,29 +45,38 @@ const Index = () => {
   ]);
 
   React.useEffect(() => {
-    // Simulate status changes for demo
-    const interval = setInterval(() => {
-      setCameras(prev => {
-        const newCameras = [...prev];
-        const randomCamera = Math.floor(Math.random() * 4);
-        if (newCameras[randomCamera].status === 'online') {
-          newCameras[randomCamera] = {
-            ...newCameras[randomCamera],
-            status: 'error',
-            lastUpdate: new Date(),
-          };
-          toast({
-            title: "Camera Alert",
-            description: `${newCameras[randomCamera].name} is experiencing issues`,
-            variant: "destructive",
+    const setupRTSPtoWeb = async () => {
+      try {
+        // Add streams to RTSPtoWeb
+        for (const camera of cameras) {
+          const response = await fetch('http://localhost:8083/stream', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              name: camera.id.toString(),
+              uri: camera.streamUrl,
+              on_demand: true,
+            }),
           });
-        }
-        return newCameras;
-      });
-    }, 10000);
 
-    return () => clearInterval(interval);
-  }, [toast]);
+          if (!response.ok) {
+            throw new Error(`Failed to add stream ${camera.id}`);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to setup RTSPtoWeb:', error);
+        toast({
+          variant: "destructive",
+          title: "Setup Error",
+          description: "Failed to initialize camera streams",
+        });
+      }
+    };
+
+    setupRTSPtoWeb();
+  }, []);
 
   return (
     <div className="min-h-screen bg-primary">
