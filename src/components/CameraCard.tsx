@@ -52,7 +52,7 @@ const CameraCard: React.FC<CameraCardProps> = ({ camera }) => {
 
     const connectStream = async () => {
       try {
-        const serverAddress = 'http://192.168.31.49:8083';
+        const serverAddress = 'http://192.168.31.37:8083';
         const response = await fetch(`${serverAddress}/stream/${camera.id}/webrtc`);
         const data = await response.json();
         

@@ -47,7 +47,7 @@ const Index = () => {
   React.useEffect(() => {
     const setupRTSPtoWeb = async () => {
       try {
-        const serverAddress = 'http://192.168.31.49:8083'; // Update this with your server IP
+        const serverAddress = 'http://192.168.31.37:8083'; // Update this with your server IP
         // Add streams to RTSPtoWeb
         for (const camera of cameras) {
           const response = await fetch(`${serverAddress}/stream`, {
