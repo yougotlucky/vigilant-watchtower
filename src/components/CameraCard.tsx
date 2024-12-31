@@ -2,7 +2,7 @@ import React from 'react';
 import { Camera } from '@/types/camera';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Power, Camera as CameraIcon, AlertCircle } from 'lucide-react';
+import { Power, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { sendTelegramAlert, sendEmailAlert, sendWhatsAppAlert } from '@/utils/notifications';
 
@@ -16,6 +16,7 @@ const CameraCard: React.FC<CameraCardProps> = ({ camera }) => {
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const lastNotificationRef = React.useRef<Date | null>(null);
+  const pcRef = React.useRef<RTCPeerConnection | null>(null);
 
   const handleStreamError = async () => {
     setIsStreamError(true);
@@ -24,20 +25,23 @@ const CameraCard: React.FC<CameraCardProps> = ({ camera }) => {
     // Prevent notification spam by checking last notification time
     const now = new Date();
     if (!lastNotificationRef.current || 
-        (now.getTime() - lastNotificationRef.current.getTime()) > 5 * 60 * 1000) { // 5 minutes
+        (now.getTime() - lastNotificationRef.current.getTime()) > 5 * 60 * 1000) {
       lastNotificationRef.current = now;
       
       const message = `⚠️ Camera Alert\n\nCamera: ${camera.name}\nStatus: Stream Unavailable\nTime: ${now.toLocaleString()}`;
       
-      // Send notifications
-      await Promise.all([
-        sendTelegramAlert(message),
-        sendEmailAlert(
-          `Camera Alert - ${camera.name} Stream Error`,
-          message
-        ),
-        sendWhatsAppAlert(message)
-      ]);
+      try {
+        await Promise.all([
+          sendTelegramAlert(message),
+          sendEmailAlert(
+            `Camera Alert - ${camera.name} Stream Error`,
+            message
+          ),
+          sendWhatsAppAlert(message)
+        ]);
+      } catch (error) {
+        console.error('Failed to send notifications:', error);
+      }
     }
 
     toast({
@@ -47,71 +51,93 @@ const CameraCard: React.FC<CameraCardProps> = ({ camera }) => {
     });
   };
 
-  React.useEffect(() => {
-    let pc: RTCPeerConnection | null = null;
-
-    const connectStream = async () => {
-      try {
-        const serverAddress = 'http://192.168.31.37:8083';
-        const response = await fetch(`${serverAddress}/stream/${camera.id}/webrtc`);
-        const data = await response.json();
-        
-        if (data.error) {
-          throw new Error(data.error);
-        }
-
-        pc = new RTCPeerConnection({
-          iceServers: [
-            {
-              urls: ['stun:stun.l.google.com:19302']
-            }
-          ]
-        });
-
-        pc.ontrack = (event) => {
-          if (videoRef.current) {
-            videoRef.current.srcObject = event.streams[0];
-            setIsLoading(false);
-            setIsStreamError(false);
-          }
-        };
-
-        pc.oniceconnectionstatechange = () => {
-          if (pc?.iceConnectionState === 'failed' || pc?.iceConnectionState === 'disconnected') {
-            handleStreamError();
-          }
-        };
-
-        await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-
-        const result = await fetch(`${serverAddress}/stream/${camera.id}/webrtc`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            sdp: answer,
-          }),
-        });
-
-        if (!result.ok) {
-          throw new Error('Failed to establish WebRTC connection');
-        }
-      } catch (error) {
-        console.error('Stream connection error:', error);
-        handleStreamError();
+  const connectStream = async () => {
+    try {
+      if (pcRef.current) {
+        pcRef.current.close();
       }
-    };
 
+      const serverAddress = 'http://192.168.31.37:8083'; // Your RTSPtoWeb server address
+      console.log(`Connecting to stream ${camera.id}...`);
+      
+      const response = await fetch(`${serverAddress}/stream/${camera.id}/webrtc`);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`WebRTC setup failed for camera ${camera.id}:`, errorText);
+        throw new Error(errorText);
+      }
+
+      const data = await response.json();
+      console.log(`Received WebRTC offer for camera ${camera.id}:`, data);
+      
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      pcRef.current = new RTCPeerConnection({
+        iceServers: [
+          {
+            urls: ['stun:stun.l.google.com:19302']
+          }
+        ]
+      });
+
+      pcRef.current.ontrack = (event) => {
+        console.log(`Received track for camera ${camera.id}:`, event);
+        if (videoRef.current) {
+          videoRef.current.srcObject = event.streams[0];
+          setIsLoading(false);
+          setIsStreamError(false);
+        }
+      };
+
+      pcRef.current.oniceconnectionstatechange = () => {
+        console.log(`ICE connection state changed for camera ${camera.id}:`, pcRef.current?.iceConnectionState);
+        if (pcRef.current?.iceConnectionState === 'failed' || 
+            pcRef.current?.iceConnectionState === 'disconnected') {
+          handleStreamError();
+        }
+      };
+
+      pcRef.current.onicecandidate = (event) => {
+        console.log(`ICE candidate for camera ${camera.id}:`, event.candidate);
+      };
+
+      await pcRef.current.setRemoteDescription(new RTCSessionDescription(data.sdp));
+      const answer = await pcRef.current.createAnswer();
+      await pcRef.current.setLocalDescription(answer);
+
+      const result = await fetch(`${serverAddress}/stream/${camera.id}/webrtc`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sdp: answer,
+        }),
+      });
+
+      if (!result.ok) {
+        const errorText = await result.text();
+        console.error(`Failed to send WebRTC answer for camera ${camera.id}:`, errorText);
+        throw new Error(`Failed to establish WebRTC connection: ${errorText}`);
+      }
+
+      console.log(`WebRTC connection established for camera ${camera.id}`);
+    } catch (error) {
+      console.error(`Stream connection error for camera ${camera.id}:`, error);
+      handleStreamError();
+    }
+  };
+
+  React.useEffect(() => {
     if (camera.status === 'online') {
       connectStream();
     }
 
     return () => {
-      if (pc) {
-        pc.close();
+      if (pcRef.current) {
+        pcRef.current.close();
       }
     };
   }, [camera.id, camera.status]);
@@ -178,7 +204,6 @@ const CameraCard: React.FC<CameraCardProps> = ({ camera }) => {
       </div>
     </Card>
   );
-
 };
 
 export default CameraCard;

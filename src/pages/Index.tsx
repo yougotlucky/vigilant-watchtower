@@ -47,9 +47,12 @@ const Index = () => {
   React.useEffect(() => {
     const setupRTSPtoWeb = async () => {
       try {
-        const serverAddress = 'http://192.168.31.37:8083'; // Update this with your server IP
+        const serverAddress = 'http://192.168.31.37:8083'; // Your RTSPtoWeb server address
+        console.log('Setting up streams for RTSPtoWeb...');
+        
         // Add streams to RTSPtoWeb
         for (const camera of cameras) {
+          console.log(`Adding stream for camera ${camera.id}:`, camera.streamUrl);
           const response = await fetch(`${serverAddress}/stream`, {
             method: 'POST',
             headers: {
@@ -59,19 +62,25 @@ const Index = () => {
               name: camera.id.toString(),
               uri: camera.streamUrl,
               on_demand: true,
+              debug: true, // Enable debug mode
             }),
           });
 
           if (!response.ok) {
-            throw new Error(`Failed to add stream ${camera.id}`);
+            const errorText = await response.text();
+            console.error(`Failed to add stream ${camera.id}:`, errorText);
+            throw new Error(`Failed to add stream ${camera.id}: ${errorText}`);
           }
+
+          const result = await response.json();
+          console.log(`Stream ${camera.id} setup response:`, result);
         }
       } catch (error) {
         console.error('Failed to setup RTSPtoWeb:', error);
         toast({
           variant: "destructive",
           title: "Setup Error",
-          description: "Failed to initialize camera streams",
+          description: "Failed to initialize camera streams. Check console for details.",
         });
       }
     };
