@@ -48,10 +48,19 @@ const Index = () => {
     const setupRTSPtoWeb = async () => {
       try {
         const serverAddress = 'http://192.168.31.37:8083';
+        const username = 'admin';  // Replace with your RTSPtoWeb username
+        const password = 'admin';  // Replace with your RTSPtoWeb password
+        const authHeader = 'Basic ' + btoa(`${username}:${password}`);
+
         console.log('Setting up streams for RTSPtoWeb...');
         
         // First check if RTSPtoWeb is accessible
-        const checkResponse = await fetch(`${serverAddress}/streams`);
+        const checkResponse = await fetch(`${serverAddress}/streams`, {
+          headers: {
+            'Authorization': authHeader
+          }
+        });
+        
         if (!checkResponse.ok) {
           throw new Error('RTSPtoWeb server is not accessible');
         }
@@ -63,6 +72,7 @@ const Index = () => {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
+              'Authorization': authHeader
             },
             body: JSON.stringify({
               name: camera.id.toString(),

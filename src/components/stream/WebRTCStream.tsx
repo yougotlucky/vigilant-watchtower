@@ -11,6 +11,10 @@ const WebRTCStream = ({ streamId, onError, serverAddress }: WebRTCStreamProps) =
   const pcRef = React.useRef<RTCPeerConnection | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
 
+  // RTSPtoWeb credentials
+  const username = 'admin';  // Replace with your RTSPtoWeb username
+  const password = 'admin';  // Replace with your RTSPtoWeb password
+
   const connectStream = async () => {
     try {
       if (pcRef.current) {
@@ -19,8 +23,16 @@ const WebRTCStream = ({ streamId, onError, serverAddress }: WebRTCStreamProps) =
 
       console.log(`Connecting to stream ${streamId} at ${serverAddress}...`);
       
+      // Create Basic Auth header
+      const authHeader = 'Basic ' + btoa(`${username}:${password}`);
+      
       // First check if the stream exists and is running
-      const checkResponse = await fetch(`${serverAddress}/streams`);
+      const checkResponse = await fetch(`${serverAddress}/streams`, {
+        headers: {
+          'Authorization': authHeader
+        }
+      });
+      
       if (!checkResponse.ok) {
         throw new Error(`Failed to check streams: ${await checkResponse.text()}`);
       }
@@ -28,7 +40,12 @@ const WebRTCStream = ({ streamId, onError, serverAddress }: WebRTCStreamProps) =
       console.log('Available streams:', streams);
 
       // Initialize WebRTC connection
-      const response = await fetch(`${serverAddress}/stream/${streamId}/webrtc`);
+      const response = await fetch(`${serverAddress}/stream/${streamId}/webrtc`, {
+        headers: {
+          'Authorization': authHeader
+        }
+      });
+      
       if (!response.ok) {
         throw new Error(`WebRTC setup failed: ${await response.text()}`);
       }
@@ -76,6 +93,7 @@ const WebRTCStream = ({ streamId, onError, serverAddress }: WebRTCStreamProps) =
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': authHeader
         },
         body: JSON.stringify({
           sdp: answer,
