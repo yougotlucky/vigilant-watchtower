@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Power, Camera as CameraIcon, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { sendTelegramAlert, sendEmailAlert } from '@/utils/notifications';
 
 interface CameraCardProps {
   camera: Camera;
@@ -14,10 +15,30 @@ const CameraCard: React.FC<CameraCardProps> = ({ camera }) => {
   const [isStreamError, setIsStreamError] = React.useState(false);
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const [isLoading, setIsLoading] = React.useState(true);
+  const lastNotificationRef = React.useRef<Date | null>(null);
 
-  const handleStreamError = () => {
+  const handleStreamError = async () => {
     setIsStreamError(true);
     setIsLoading(false);
+
+    // Prevent notification spam by checking last notification time
+    const now = new Date();
+    if (!lastNotificationRef.current || 
+        (now.getTime() - lastNotificationRef.current.getTime()) > 5 * 60 * 1000) { // 5 minutes
+      lastNotificationRef.current = now;
+      
+      const message = `⚠️ Camera Alert\n\nCamera: ${camera.name}\nStatus: Stream Unavailable\nTime: ${now.toLocaleString()}`;
+      
+      // Send notifications
+      await Promise.all([
+        sendTelegramAlert(message),
+        sendEmailAlert(
+          `Camera Alert - ${camera.name} Stream Error`,
+          message
+        )
+      ]);
+    }
+
     toast({
       variant: "destructive",
       title: "Stream Error",
@@ -30,8 +51,7 @@ const CameraCard: React.FC<CameraCardProps> = ({ camera }) => {
 
     const connectStream = async () => {
       try {
-        // Replace with your actual server address where RTSPtoWeb is running
-        const serverAddress = 'http://192.168.31.49:8083'; // Update this with your server IP
+        const serverAddress = 'http://192.168.31.49:8083';
         const response = await fetch(`${serverAddress}/stream/${camera.id}/webrtc`);
         const data = await response.json();
         
@@ -157,6 +177,7 @@ const CameraCard: React.FC<CameraCardProps> = ({ camera }) => {
       </div>
     </Card>
   );
+
 };
 
 export default CameraCard;
