@@ -49,7 +49,7 @@ const Index = () => {
       try {
         const serverAddress = 'http://192.168.31.37:8083';
         const username = 'admin';  // Replace with your RTSPtoWeb username
-        const password = 'admin';  // Replace with your RTSPtoWeb password
+        const password = 'Aleem@1125';  // Replace with your RTSPtoWeb password
         const authHeader = 'Basic ' + btoa(`${username}:${password}`);
 
         console.log('Setting up streams for RTSPtoWeb...');

@@ -13,7 +13,7 @@ const WebRTCStream = ({ streamId, onError, serverAddress }: WebRTCStreamProps) =
 
   // RTSPtoWeb credentials
   const username = 'admin';  // Replace with your RTSPtoWeb username
-  const password = 'admin';  // Replace with your RTSPtoWeb password
+  const password = 'Aleem@1125';  // Replace with your RTSPtoWeb password
 
   const connectStream = async () => {
     try {
