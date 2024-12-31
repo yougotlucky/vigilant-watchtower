@@ -57,3 +57,38 @@ export const sendEmailAlert = async (subject: string, message: string) => {
     console.error('Error sending email alert:', error);
   }
 };
+
+export const sendWhatsAppAlert = async (message: string) => {
+  const WHATSAPP_API_URL = process.env.WHATSAPP_API_URL;
+  const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN;
+  const WHATSAPP_TO = process.env.WHATSAPP_TO;
+
+  if (!WHATSAPP_API_URL || !WHATSAPP_TOKEN || !WHATSAPP_TO) {
+    console.error('WhatsApp credentials not configured');
+    return;
+  }
+
+  try {
+    const response = await fetch(WHATSAPP_API_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${WHATSAPP_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        to: WHATSAPP_TO,
+        type: 'text',
+        text: {
+          body: message
+        }
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to send WhatsApp notification');
+    }
+  } catch (error) {
+    console.error('Error sending WhatsApp alert:', error);
+  }
+};

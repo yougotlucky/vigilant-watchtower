@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Power, Camera as CameraIcon, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { sendTelegramAlert, sendEmailAlert } from '@/utils/notifications';
+import { sendTelegramAlert, sendEmailAlert, sendWhatsAppAlert } from '@/utils/notifications';
 
 interface CameraCardProps {
   camera: Camera;
@@ -35,7 +35,8 @@ const CameraCard: React.FC<CameraCardProps> = ({ camera }) => {
         sendEmailAlert(
           `Camera Alert - ${camera.name} Stream Error`,
           message
-        )
+        ),
+        sendWhatsAppAlert(message)
       ]);
     }
 
