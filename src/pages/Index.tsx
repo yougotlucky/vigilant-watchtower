@@ -1,7 +1,18 @@
 import React from 'react';
 import CameraGrid from '@/components/CameraGrid';
+import NotificationSettings from '@/components/settings/NotificationSettings';
 import { Camera } from '@/types/camera';
 import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
+import { Settings } from 'lucide-react';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 const Index = () => {
   const { toast } = useToast();
@@ -48,13 +59,12 @@ const Index = () => {
     const setupRTSPtoWeb = async () => {
       try {
         const serverAddress = 'http://192.168.31.37:8083';
-        const username = 'admin';  // Replace with your RTSPtoWeb username
-        const password = 'Aleem@1125';  // Replace with your RTSPtoWeb password
+        const username = 'admin';
+        const password = 'Aleem@1125';
         const authHeader = 'Basic ' + btoa(`${username}:${password}`);
 
         console.log('Setting up streams for RTSPtoWeb...');
         
-        // First check if RTSPtoWeb is accessible
         const checkResponse = await fetch(`${serverAddress}/streams`, {
           headers: {
             'Authorization': authHeader
@@ -65,7 +75,6 @@ const Index = () => {
           throw new Error('RTSPtoWeb server is not accessible');
         }
         
-        // Add streams to RTSPtoWeb
         for (const camera of cameras) {
           console.log(`Adding stream for camera ${camera.id}:`, camera.streamUrl);
           const response = await fetch(`${serverAddress}/stream`, {
@@ -107,7 +116,27 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-primary">
       <header className="bg-accent p-4">
-        <h1 className="text-2xl font-bold text-primary-foreground">CCTV Monitoring Dashboard</h1>
+        <div className="container mx-auto flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-primary-foreground">CCTV Monitoring Dashboard</h1>
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="icon">
+                <Settings className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto">
+              <SheetHeader>
+                <SheetTitle>Settings</SheetTitle>
+                <SheetDescription>
+                  Configure your notification preferences and other settings
+                </SheetDescription>
+              </SheetHeader>
+              <div className="mt-6">
+                <NotificationSettings />
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
       </header>
       <main className="container mx-auto py-6">
         <CameraGrid cameras={cameras} />

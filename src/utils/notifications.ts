@@ -1,9 +1,9 @@
 export const sendTelegramAlert = async (message: string) => {
-  const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-  const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
+  const TELEGRAM_BOT_TOKEN = localStorage.getItem('telegramBotToken');
+  const TELEGRAM_CHAT_ID = localStorage.getItem('telegramChatId');
   
   if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
-    console.error('Telegram credentials not configured');
+    console.error('Telegram credentials not configured in settings');
     return;
   }
 
@@ -25,15 +25,16 @@ export const sendTelegramAlert = async (message: string) => {
     }
   } catch (error) {
     console.error('Error sending Telegram alert:', error);
+    throw error;
   }
 };
 
 export const sendEmailAlert = async (subject: string, message: string) => {
-  const EMAIL_SERVICE_URL = process.env.EMAIL_SERVICE_URL;
-  const EMAIL_TO = process.env.EMAIL_TO;
+  const EMAIL_SERVICE_URL = localStorage.getItem('emailServiceUrl');
+  const EMAIL_TO = localStorage.getItem('emailTo');
   
   if (!EMAIL_SERVICE_URL || !EMAIL_TO) {
-    console.error('Email service not configured');
+    console.error('Email service not configured in settings');
     return;
   }
 
@@ -55,16 +56,17 @@ export const sendEmailAlert = async (subject: string, message: string) => {
     }
   } catch (error) {
     console.error('Error sending email alert:', error);
+    throw error;
   }
 };
 
 export const sendWhatsAppAlert = async (message: string) => {
-  const WHATSAPP_API_URL = process.env.WHATSAPP_API_URL;
-  const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN;
-  const WHATSAPP_TO = process.env.WHATSAPP_TO;
+  const WHATSAPP_API_URL = localStorage.getItem('whatsappApiUrl');
+  const WHATSAPP_TOKEN = localStorage.getItem('whatsappToken');
+  const WHATSAPP_TO = localStorage.getItem('whatsappTo');
 
   if (!WHATSAPP_API_URL || !WHATSAPP_TOKEN || !WHATSAPP_TO) {
-    console.error('WhatsApp credentials not configured');
+    console.error('WhatsApp credentials not configured in settings');
     return;
   }
 
@@ -90,5 +92,6 @@ export const sendWhatsAppAlert = async (message: string) => {
     }
   } catch (error) {
     console.error('Error sending WhatsApp alert:', error);
+    throw error;
   }
 };
