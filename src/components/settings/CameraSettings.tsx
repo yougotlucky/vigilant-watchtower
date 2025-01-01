@@ -5,13 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Camera } from '@/types/camera';
-import { Plus, Minus, Save, Grid2x2, Grid3x3 } from 'lucide-react';
+import { Plus, Minus, Save, Grid2x2, Grid3x3, LayoutGrid } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const CameraSettings = () => {
   const { toast } = useToast();
   const [serverUrl, setServerUrl] = React.useState(localStorage.getItem('serverUrl') || 'http://192.168.31.37:8083');
-  const [numCameras, setNumCameras] = React.useState(Number(localStorage.getItem('numCameras')) || 4);
   const [gridSize, setGridSize] = React.useState(Number(localStorage.getItem('gridSize')) || 2);
   const [cameras, setCameras] = React.useState<Camera[]>(() => {
     const savedCameras = localStorage.getItem('cameras');
@@ -37,20 +36,23 @@ const CameraSettings = () => {
         isRecording: true,
         lastUpdate: new Date(),
       }]);
-      setNumCameras(prev => prev + 1);
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Maximum Limit Reached",
+        description: "You cannot add more than 16 cameras.",
+      });
     }
   };
 
   const handleRemoveCamera = () => {
     if (cameras.length > 1) {
       setCameras(cameras.slice(0, -1));
-      setNumCameras(prev => prev - 1);
     }
   };
 
   const handleSave = () => {
     localStorage.setItem('serverUrl', serverUrl);
-    localStorage.setItem('numCameras', numCameras.toString());
     localStorage.setItem('gridSize', gridSize.toString());
     localStorage.setItem('cameras', JSON.stringify(cameras));
     
@@ -70,8 +72,8 @@ const CameraSettings = () => {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          {gridSize <= 3 ? <Grid2x2 className="h-5 w-5" /> : <Grid3x3 className="h-5 w-5" />}
-          Camera Settings
+          <LayoutGrid className="h-5 w-5" />
+          Camera Settings ({cameras.length}/16 cameras)
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -122,7 +124,7 @@ const CameraSettings = () => {
           </span>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
           {cameras.map((camera, index) => (
             <div key={camera.id} className="space-y-2 p-4 border rounded-lg bg-accent/5">
               <div className="flex items-center gap-4">
