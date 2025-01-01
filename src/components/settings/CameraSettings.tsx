@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Camera } from '@/types/camera';
-import { Plus, Minus, Save, Grid3x3, Grid4x4 } from 'lucide-react';
+import { Plus, Minus, Save, Grid2x2, Grid3x3 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const CameraSettings = () => {
@@ -70,7 +70,7 @@ const CameraSettings = () => {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          {gridSize <= 3 ? <Grid3x3 className="h-5 w-5" /> : <Grid4x4 className="h-5 w-5" />}
+          {gridSize <= 3 ? <Grid2x2 className="h-5 w-5" /> : <Grid3x3 className="h-5 w-5" />}
           Camera Settings
         </CardTitle>
       </CardHeader>
