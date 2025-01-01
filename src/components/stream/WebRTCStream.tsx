@@ -14,8 +14,8 @@ const WebRTCStream = ({ streamId, onError, serverAddress }: WebRTCStreamProps) =
   const maxRetries = 3;
 
   // RTSPtoWeb credentials
-  const username = 'admin';  // Replace with your RTSPtoWeb username
-  const password = 'Aleem@1125';  // Replace with your RTSPtoWeb password
+  const username = 'admin';
+  const password = 'Aleem@1125';
 
   const connectStream = async () => {
     try {
@@ -31,8 +31,13 @@ const WebRTCStream = ({ streamId, onError, serverAddress }: WebRTCStreamProps) =
       // First check if the stream exists and is running
       const checkResponse = await fetch(`${serverAddress}/streams`, {
         headers: {
-          'Authorization': authHeader
-        }
+          'Authorization': authHeader,
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+        },
+        mode: 'cors',
+        credentials: 'include'
       });
       
       if (!checkResponse.ok) {
@@ -44,8 +49,13 @@ const WebRTCStream = ({ streamId, onError, serverAddress }: WebRTCStreamProps) =
       // Initialize WebRTC connection
       const response = await fetch(`${serverAddress}/stream/${streamId}/webrtc`, {
         headers: {
-          'Authorization': authHeader
-        }
+          'Authorization': authHeader,
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+        },
+        mode: 'cors',
+        credentials: 'include'
       });
       
       if (!response.ok) {
@@ -95,8 +105,13 @@ const WebRTCStream = ({ streamId, onError, serverAddress }: WebRTCStreamProps) =
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': authHeader
+          'Authorization': authHeader,
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization'
         },
+        mode: 'cors',
+        credentials: 'include',
         body: JSON.stringify({
           sdp: answer,
         }),
@@ -110,6 +125,9 @@ const WebRTCStream = ({ streamId, onError, serverAddress }: WebRTCStreamProps) =
       setRetryCount(0); // Reset retry count on successful connection
     } catch (error) {
       console.error(`Stream ${streamId} connection error:`, error);
+      if (error instanceof Error && error.message.includes('Failed to fetch')) {
+        console.error('CORS or network connectivity issue detected');
+      }
       handleStreamError();
     }
   };
@@ -130,7 +148,6 @@ const WebRTCStream = ({ streamId, onError, serverAddress }: WebRTCStreamProps) =
   React.useEffect(() => {
     connectStream();
     
-    // Cleanup function
     return () => {
       if (pcRef.current) {
         console.log(`Cleaning up WebRTC connection for stream ${streamId}`);

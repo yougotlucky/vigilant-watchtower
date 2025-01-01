@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 
 const CameraSettings = () => {
   const { toast } = useToast();
-  const [serverUrl, setServerUrl] = React.useState(localStorage.getItem('serverUrl') || 'http://192.168.31.37:8083');
+  const [serverUrl, setServerUrl] = React.useState(localStorage.getItem('serverUrl') || 'https://192.168.31.37:8083');
   const [gridSize, setGridSize] = React.useState(Number(localStorage.getItem('gridSize')) || 2);
   const [cameras, setCameras] = React.useState<Camera[]>(() => {
     const savedCameras = localStorage.getItem('cameras');
@@ -82,7 +82,7 @@ const CameraSettings = () => {
           <Input
             value={serverUrl}
             onChange={(e) => setServerUrl(e.target.value)}
-            placeholder="http://192.168.31.37:8083"
+            placeholder="https://192.168.31.37:8083"
           />
         </div>
 
