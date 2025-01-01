@@ -138,7 +138,7 @@ const CameraSettings = () => {
               <Input
                 value={camera.streamUrl}
                 onChange={(e) => updateCamera(index, 'streamUrl', e.target.value)}
-                placeholder="RTSP URL (e.g., rtsp://username:password@ip:port/stream)"
+                placeholder="RTSP URL (e.g., rtsp://admin:Aleem%401125@192.168.31.49:554/cam/realmonitor?channel=1&subtype=0)"
                 className="bg-background"
               />
             </div>
