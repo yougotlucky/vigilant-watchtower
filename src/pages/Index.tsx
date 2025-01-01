@@ -30,113 +30,39 @@ const Index = () => {
   const [selectedCamera, setSelectedCamera] = React.useState<Camera | null>(null);
   const [cameras, setCameras] = React.useState<Camera[]>(() => {
     const savedCameras = localStorage.getItem('cameras');
-    return savedCameras ? JSON.parse(savedCameras) : [
-      {
-        id: 1,
-        name: "Camera 1",
-        status: 'online',
-        streamUrl: "rtsp://admin:Aleem%401125@192.168.31.49:554/cam/realmonitor?channel=1&subtype=0",
-        powerStatus: true,
-        isRecording: true,
-        lastUpdate: new Date(),
-      },
-    {
-      id: 2,
-      name: "Camera 2",
+    if (savedCameras) {
+      return JSON.parse(savedCameras);
+    }
+    // Default to 4 cameras if none are saved
+    return Array(4).fill(null).map((_, i) => ({
+      id: i + 1,
+      name: `Camera ${i + 1}`,
       status: 'online',
-      streamUrl: "rtsp://admin:Aleem%401125@192.168.31.49:554/cam/realmonitor?channel=2&subtype=0",
+      streamUrl: `rtsp://admin:Aleem%401125@192.168.31.49:554/cam/realmonitor?channel=${i + 1}&subtype=0`,
       powerStatus: true,
       isRecording: true,
       lastUpdate: new Date(),
-    },
-    {
-      id: 3,
-      name: "Camera 3",
-      status: 'online',
-      streamUrl: "rtsp://admin:Aleem%401125@192.168.31.49:554/cam/realmonitor?channel=3&subtype=0",
-      powerStatus: true,
-      isRecording: true,
-      lastUpdate: new Date(),
-    },
-    {
-      id: 4,
-      name: "Camera 4",
-      status: 'online',
-      streamUrl: "rtsp://admin:Aleem%401125@192.168.31.49:554/cam/realmonitor?channel=4&subtype=0",
-      powerStatus: true,
-      isRecording: true,
-      lastUpdate: new Date(),
-    },
-    ];
+    }));
   });
 
   React.useEffect(() => {
-    const setupRTSPtoWeb = async () => {
-      try {
-        const serverAddress = localStorage.getItem('serverUrl') || 'http://192.168.31.37:8083';
-        const username = 'admin';
-        const password = 'Aleem@1125';
-        const authHeader = 'Basic ' + btoa(`${username}:${password}`);
-
-        console.log('Setting up streams for RTSPtoWeb...');
-        
-        const checkResponse = await fetch(`${serverAddress}/streams`, {
-          headers: {
-            'Authorization': authHeader
-          }
-        });
-        
-        if (!checkResponse.ok) {
-          throw new Error('RTSPtoWeb server is not accessible');
-        }
-        
-        for (const camera of cameras) {
-          if (!camera.streamUrl) continue;
-          
-          console.log(`Adding stream for camera ${camera.id}:`, camera.streamUrl);
-          const response = await fetch(`${serverAddress}/stream`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': authHeader
-            },
-            body: JSON.stringify({
-              name: camera.id.toString(),
-              uri: camera.streamUrl,
-              on_demand: true,
-              debug: true,
-            }),
-          });
-
-          if (!response.ok) {
-            const errorText = await response.text();
-            console.error(`Failed to add stream ${camera.id}:`, errorText);
-            throw new Error(`Failed to add stream ${camera.id}: ${errorText}`);
-          }
-
-          const result = await response.json();
-          console.log(`Stream ${camera.id} setup response:`, result);
-        }
-      } catch (error) {
-        console.error('Failed to setup RTSPtoWeb:', error);
-        toast({
-          variant: "destructive",
-          title: "Setup Error",
-          description: "Failed to initialize camera streams. Check console for details.",
-        });
+    const handleStorageChange = () => {
+      const savedCameras = localStorage.getItem('cameras');
+      if (savedCameras) {
+        setCameras(JSON.parse(savedCameras));
       }
     };
 
-    if (isAuthenticated) {
-      setupRTSPtoWeb();
-    }
-  }, [cameras, isAuthenticated]);
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   if (!isAuthenticated) {
     return <LoginForm onLogin={setIsAuthenticated} />;
   }
 
   const gridSize = Number(localStorage.getItem('gridSize')) || 2;
+  const maxCameras = gridSize * gridSize;
 
   return (
     <div className="min-h-screen bg-background">
@@ -194,7 +120,7 @@ const Index = () => {
           </div>
         ) : (
           <CameraGrid
-            cameras={cameras.slice(0, gridSize * gridSize)}
+            cameras={cameras.slice(0, maxCameras)}
             onCameraClick={setSelectedCamera}
           />
         )}

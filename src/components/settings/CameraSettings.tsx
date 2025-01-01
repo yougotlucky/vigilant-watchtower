@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Camera } from '@/types/camera';
-import { Plus, Minus, Save } from 'lucide-react';
+import { Plus, Minus, Save, Grid3x3, Grid4x4 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const CameraSettings = () => {
@@ -69,7 +69,10 @@ const CameraSettings = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Camera Settings</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          {gridSize <= 3 ? <Grid3x3 className="h-5 w-5" /> : <Grid4x4 className="h-5 w-5" />}
+          Camera Settings
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-2">
@@ -82,46 +85,59 @@ const CameraSettings = () => {
         </div>
 
         <div className="space-y-2">
-          <Label>Grid Size</Label>
+          <Label>Grid Layout</Label>
           <Select value={gridSize.toString()} onValueChange={(value) => setGridSize(Number(value))}>
             <SelectTrigger>
               <SelectValue placeholder="Select grid size" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="1">1x1</SelectItem>
-              <SelectItem value="2">2x2</SelectItem>
-              <SelectItem value="3">3x3</SelectItem>
-              <SelectItem value="4">4x4</SelectItem>
+              <SelectItem value="2">2x2 (4 cameras)</SelectItem>
+              <SelectItem value="3">3x3 (9 cameras)</SelectItem>
+              <SelectItem value="4">4x4 (16 cameras)</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" onClick={handleAddCamera} disabled={cameras.length >= 16}>
+          <Button 
+            variant="outline" 
+            size="icon" 
+            onClick={handleAddCamera} 
+            disabled={cameras.length >= 16}
+            className="hover:bg-secondary/10"
+          >
             <Plus className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="icon" onClick={handleRemoveCamera} disabled={cameras.length <= 1}>
+          <Button 
+            variant="outline" 
+            size="icon" 
+            onClick={handleRemoveCamera} 
+            disabled={cameras.length <= 1}
+            className="hover:bg-secondary/10"
+          >
             <Minus className="h-4 w-4" />
           </Button>
           <span className="text-sm text-muted-foreground">
-            {cameras.length} camera{cameras.length !== 1 ? 's' : ''} configured
+            {cameras.length} camera{cameras.length !== 1 ? 's' : ''} configured (max 16)
           </span>
         </div>
 
         <div className="space-y-4">
           {cameras.map((camera, index) => (
-            <div key={camera.id} className="space-y-2 p-4 border rounded-lg">
+            <div key={camera.id} className="space-y-2 p-4 border rounded-lg bg-accent/5">
               <div className="flex items-center gap-4">
                 <Input
                   value={camera.name}
                   onChange={(e) => updateCamera(index, 'name', e.target.value)}
                   placeholder="Camera Name"
+                  className="bg-background"
                 />
               </div>
               <Input
                 value={camera.streamUrl}
                 onChange={(e) => updateCamera(index, 'streamUrl', e.target.value)}
                 placeholder="RTSP URL (e.g., rtsp://username:password@ip:port/stream)"
+                className="bg-background"
               />
             </div>
           ))}
