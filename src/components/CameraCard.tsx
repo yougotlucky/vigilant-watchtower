@@ -16,7 +16,7 @@ const CameraCard: React.FC<CameraCardProps> = ({ camera }) => {
   const [isStreamError, setIsStreamError] = React.useState(false);
   const [reconnectCount, setReconnectCount] = React.useState(0);
   const lastNotificationRef = React.useRef<Date | null>(null);
-  const serverAddress = 'http://192.168.31.37:8083';
+  const serverAddress = 'http://192.168.31.37:8080';
 
   const handleStreamError = async () => {
     setIsStreamError(true);
