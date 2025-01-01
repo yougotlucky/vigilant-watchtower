@@ -4,13 +4,23 @@ import CameraCard from './CameraCard';
 
 interface CameraGridProps {
   cameras: Camera[];
+  onCameraClick?: (camera: Camera) => void;
 }
 
-const CameraGrid: React.FC<CameraGridProps> = ({ cameras }) => {
+const CameraGrid: React.FC<CameraGridProps> = ({ cameras, onCameraClick }) => {
+  const gridSize = Math.ceil(Math.sqrt(cameras.length));
+  const gridClass = `grid grid-cols-1 md:grid-cols-${gridSize} lg:grid-cols-${gridSize} gap-4 p-4`;
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 p-4">
+    <div className={gridClass}>
       {cameras.map((camera) => (
-        <CameraCard key={camera.id} camera={camera} />
+        <div
+          key={camera.id}
+          className="cursor-pointer"
+          onClick={() => onCameraClick?.(camera)}
+        >
+          <CameraCard camera={camera} />
+        </div>
       ))}
     </div>
   );

@@ -1,10 +1,12 @@
 import React from 'react';
 import CameraGrid from '@/components/CameraGrid';
 import NotificationSettings from '@/components/settings/NotificationSettings';
+import CameraSettings from '@/components/settings/CameraSettings';
+import LoginForm from '@/components/auth/LoginForm';
 import { Camera } from '@/types/camera';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { Settings } from 'lucide-react';
+import { Settings, Maximize2 } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -13,19 +15,31 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 
 const Index = () => {
   const { toast } = useToast();
-  const [cameras, setCameras] = React.useState<Camera[]>([
-    {
-      id: 1,
-      name: "Camera 1",
-      status: 'online',
-      streamUrl: "rtsp://admin:Aleem%401125@192.168.31.49:554/cam/realmonitor?channel=1&subtype=0",
-      powerStatus: true,
-      isRecording: true,
-      lastUpdate: new Date(),
-    },
+  const [isAuthenticated, setIsAuthenticated] = React.useState(() => 
+    localStorage.getItem('isAuthenticated') === 'true'
+  );
+  const [selectedCamera, setSelectedCamera] = React.useState<Camera | null>(null);
+  const [cameras, setCameras] = React.useState<Camera[]>(() => {
+    const savedCameras = localStorage.getItem('cameras');
+    return savedCameras ? JSON.parse(savedCameras) : [
+      {
+        id: 1,
+        name: "Camera 1",
+        status: 'online',
+        streamUrl: "rtsp://admin:Aleem%401125@192.168.31.49:554/cam/realmonitor?channel=1&subtype=0",
+        powerStatus: true,
+        isRecording: true,
+        lastUpdate: new Date(),
+      },
     {
       id: 2,
       name: "Camera 2",
@@ -53,12 +67,13 @@ const Index = () => {
       isRecording: true,
       lastUpdate: new Date(),
     },
-  ]);
+    ];
+  });
 
   React.useEffect(() => {
     const setupRTSPtoWeb = async () => {
       try {
-        const serverAddress = 'http://192.168.31.37:8083';
+        const serverAddress = localStorage.getItem('serverUrl') || 'http://192.168.31.37:8083';
         const username = 'admin';
         const password = 'Aleem@1125';
         const authHeader = 'Basic ' + btoa(`${username}:${password}`);
@@ -76,6 +91,8 @@ const Index = () => {
         }
         
         for (const camera of cameras) {
+          if (!camera.streamUrl) continue;
+          
           console.log(`Adding stream for camera ${camera.id}:`, camera.streamUrl);
           const response = await fetch(`${serverAddress}/stream`, {
             method: 'POST',
@@ -110,14 +127,22 @@ const Index = () => {
       }
     };
 
-    setupRTSPtoWeb();
-  }, []);
+    if (isAuthenticated) {
+      setupRTSPtoWeb();
+    }
+  }, [cameras, isAuthenticated]);
+
+  if (!isAuthenticated) {
+    return <LoginForm onLogin={setIsAuthenticated} />;
+  }
+
+  const gridSize = Number(localStorage.getItem('gridSize')) || 2;
 
   return (
-    <div className="min-h-screen bg-primary">
-      <header className="bg-accent p-4">
+    <div className="min-h-screen bg-background">
+      <header className="bg-card p-4 shadow-sm">
         <div className="container mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-primary-foreground">CCTV Monitoring Dashboard</h1>
+          <h1 className="text-2xl font-bold">CCTV Monitoring Dashboard</h1>
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="outline" size="icon">
@@ -128,18 +153,51 @@ const Index = () => {
               <SheetHeader>
                 <SheetTitle>Settings</SheetTitle>
                 <SheetDescription>
-                  Configure your notification preferences and other settings
+                  Configure your cameras and notification preferences
                 </SheetDescription>
               </SheetHeader>
               <div className="mt-6">
-                <NotificationSettings />
+                <Tabs defaultValue="cameras">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="cameras">Cameras</TabsTrigger>
+                    <TabsTrigger value="notifications">Notifications</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="cameras">
+                    <CameraSettings />
+                  </TabsContent>
+                  <TabsContent value="notifications">
+                    <NotificationSettings />
+                  </TabsContent>
+                </Tabs>
               </div>
             </SheetContent>
           </Sheet>
         </div>
       </header>
       <main className="container mx-auto py-6">
-        <CameraGrid cameras={cameras} />
+        {selectedCamera ? (
+          <div className="relative">
+            <Button
+              variant="outline"
+              size="icon"
+              className="absolute top-2 right-2 z-10"
+              onClick={() => setSelectedCamera(null)}
+            >
+              <Maximize2 className="h-4 w-4" />
+            </Button>
+            <div className="aspect-video">
+              <CameraGrid
+                cameras={[selectedCamera]}
+                onCameraClick={setSelectedCamera}
+              />
+            </div>
+          </div>
+        ) : (
+          <CameraGrid
+            cameras={cameras.slice(0, gridSize * gridSize)}
+            onCameraClick={setSelectedCamera}
+          />
+        )}
       </main>
     </div>
   );
