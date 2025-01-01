@@ -1,22 +1,24 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Power } from 'lucide-react';
+import { Power, RefreshCw } from 'lucide-react';
 
 interface StreamStatusProps {
   status: 'online' | 'offline' | 'error';
   powerStatus: boolean;
   isRecording: boolean;
   isStreamError: boolean;
+  reconnectCount: number;
 }
 
 const StreamStatus: React.FC<StreamStatusProps> = ({
   status,
   powerStatus,
   isRecording,
-  isStreamError
+  isStreamError,
+  reconnectCount
 }) => {
   return (
-    <div className="flex gap-2 mt-2">
+    <div className="flex flex-wrap gap-2 mt-2">
       <Badge 
         variant={status === 'online' && !isStreamError ? 'default' : 'destructive'}
         className={status === 'error' || isStreamError ? 'animate-pulse-warning' : ''}
@@ -38,6 +40,12 @@ const StreamStatus: React.FC<StreamStatusProps> = ({
         <Badge variant="secondary">
           <div className="w-2 h-2 bg-red-500 rounded-full mr-2 animate-pulse" />
           Recording
+        </Badge>
+      )}
+      {reconnectCount > 0 && (
+        <Badge variant="outline">
+          <RefreshCw className="w-4 h-4 mr-1" />
+          Retry {reconnectCount}
         </Badge>
       )}
     </div>

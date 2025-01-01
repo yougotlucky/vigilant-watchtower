@@ -14,11 +14,13 @@ interface CameraCardProps {
 const CameraCard: React.FC<CameraCardProps> = ({ camera }) => {
   const { toast } = useToast();
   const [isStreamError, setIsStreamError] = React.useState(false);
+  const [reconnectCount, setReconnectCount] = React.useState(0);
   const lastNotificationRef = React.useRef<Date | null>(null);
   const serverAddress = 'http://192.168.31.37:8083';
 
   const handleStreamError = async () => {
     setIsStreamError(true);
+    setReconnectCount(prev => prev + 1);
 
     // Prevent notification spam by checking last notification time
     const now = new Date();
@@ -26,7 +28,7 @@ const CameraCard: React.FC<CameraCardProps> = ({ camera }) => {
         (now.getTime() - lastNotificationRef.current.getTime()) > 5 * 60 * 1000) {
       lastNotificationRef.current = now;
       
-      const message = `⚠️ Camera Alert\n\nCamera: ${camera.name}\nStatus: Stream Unavailable\nTime: ${now.toLocaleString()}`;
+      const message = `⚠️ Camera Alert\n\nCamera: ${camera.name}\nStatus: Stream Unavailable\nReconnection Attempts: ${reconnectCount}\nTime: ${now.toLocaleString()}`;
       
       try {
         await Promise.all([
@@ -37,15 +39,25 @@ const CameraCard: React.FC<CameraCardProps> = ({ camera }) => {
           ),
           sendWhatsAppAlert(message)
         ]);
+
+        toast({
+          title: "Notifications Sent",
+          description: "Alert notifications have been sent to all configured channels.",
+        });
       } catch (error) {
         console.error('Failed to send notifications:', error);
+        toast({
+          variant: "destructive",
+          title: "Notification Error",
+          description: "Failed to send some notifications. Check console for details.",
+        });
       }
     }
 
     toast({
       variant: "destructive",
       title: "Stream Error",
-      description: `${camera.name} stream is unavailable`,
+      description: `${camera.name} stream is unavailable (Attempt ${reconnectCount})`,
     });
   };
 
@@ -59,6 +71,7 @@ const CameraCard: React.FC<CameraCardProps> = ({ camera }) => {
             powerStatus={camera.powerStatus}
             isRecording={camera.isRecording}
             isStreamError={isStreamError}
+            reconnectCount={reconnectCount}
           />
         </div>
         {(camera.status === 'error' || isStreamError) && (
