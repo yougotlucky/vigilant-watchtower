@@ -62,18 +62,20 @@ const CameraCard: React.FC<CameraCardProps> = ({
   };
 
   const containerClassName = isFullscreen 
-    ? "fixed inset-0 z-50 bg-background p-6" 
+    ? "fixed inset-0 z-50 bg-background/95 backdrop-blur-sm p-6" 
     : "relative w-full h-full";
 
-  const cardClassName = isFullscreen 
-    ? "h-full bg-card" 
-    : "bg-card";
+  const cardClassName = `${isFullscreen 
+    ? "h-full" 
+    : ""} bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-slate-700/50 shadow-xl rounded-xl overflow-hidden transition-all duration-300 hover:shadow-indigo-500/10`;
 
   return (
     <Card className={cardClassName}>
-      <div className="flex justify-between items-start p-4">
+      <div className="flex justify-between items-start p-4 bg-gradient-to-r from-slate-800/50 to-slate-900/50">
         <div>
-          <h3 className="text-lg font-semibold">{camera.name}</h3>
+          <h3 className="text-lg font-semibold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
+            {camera.name}
+          </h3>
           <StreamStatus
             status={camera.status}
             powerStatus={camera.powerStatus}
@@ -84,21 +86,21 @@ const CameraCard: React.FC<CameraCardProps> = ({
         </div>
         <div className="flex items-center gap-2">
           {(camera.status === 'error' || isStreamError) && (
-            <AlertCircle className="w-6 h-6 text-destructive animate-pulse" />
+            <AlertCircle className="w-6 h-6 text-red-400 animate-pulse" />
           )}
           {onToggleFullscreen && (
             <Button
               variant="ghost"
               size="icon"
               onClick={onToggleFullscreen}
-              className="hover:bg-accent"
+              className="hover:bg-slate-700/50 text-slate-300 hover:text-white transition-colors"
             >
               <Maximize2 className="w-5 h-5" />
             </Button>
           )}
         </div>
       </div>
-      <div className={`relative ${isFullscreen ? 'h-[calc(100%-8rem)]' : 'aspect-video'} bg-black rounded-lg overflow-hidden mx-4 mb-4`}>
+      <div className={`relative ${isFullscreen ? 'h-[calc(100%-8rem)]' : 'aspect-video'} bg-slate-950 rounded-lg overflow-hidden mx-4 mb-4 border border-slate-800/50`}>
         {camera.status === 'online' ? (
           <WebRTCStream
             streamId={camera.id}
@@ -106,12 +108,12 @@ const CameraCard: React.FC<CameraCardProps> = ({
             serverAddress={localStorage.getItem('serverUrl') || 'http://localhost:8083'}
           />
         ) : (
-          <div className="flex items-center justify-center h-full text-muted-foreground">
+          <div className="flex items-center justify-center h-full text-slate-500">
             <span>Stream Unavailable</span>
           </div>
         )}
       </div>
-      <div className="px-4 pb-4 text-sm text-muted-foreground">
+      <div className="px-4 pb-4 text-sm text-slate-400">
         Last Updated: {new Date(camera.lastUpdate).toLocaleString()}
       </div>
     </Card>

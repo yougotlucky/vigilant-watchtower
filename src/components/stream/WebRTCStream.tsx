@@ -24,13 +24,16 @@ const WebRTCStream = ({ streamId, onError, serverAddress }: WebRTCStreamProps) =
       // Initialize WebRTC connection with more ICE servers
       pcRef.current = new RTCPeerConnection({
         iceServers: [
-          { urls: 'stun:stun.l.google.com:19302' },
-          { urls: 'stun:stun1.l.google.com:19302' },
-          { urls: 'stun:stun2.l.google.com:19302' },
-          { urls: 'stun:stun3.l.google.com:19302' },
-          { urls: 'stun:stun4.l.google.com:19302' }
+          { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] },
+          {
+            urls: 'turn:turn.example.com:3478',
+            username: 'webrtc',
+            credential: 'turnserver'
+          }
         ],
-        iceCandidatePoolSize: 10
+        iceCandidatePoolSize: 10,
+        bundlePolicy: 'max-bundle',
+        rtcpMuxPolicy: 'require'
       });
 
       // Set up media handlers
@@ -56,7 +59,7 @@ const WebRTCStream = ({ streamId, onError, serverAddress }: WebRTCStreamProps) =
         }
       };
 
-      // Create and send offer with specific constraints
+      // Create and send offer
       const offer = await pcRef.current.createOffer({
         offerToReceiveVideo: true,
         offerToReceiveAudio: true
@@ -114,19 +117,19 @@ const WebRTCStream = ({ streamId, onError, serverAddress }: WebRTCStreamProps) =
   }, [streamId]);
 
   return (
-    <div className="relative w-full h-full">
+    <div className="relative w-full h-full bg-gradient-to-br from-slate-900 to-slate-950">
       <video
         ref={videoRef}
         autoPlay
         playsInline
         muted
-        className="w-full h-full object-contain bg-black"
+        className="w-full h-full object-contain"
       />
       {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-          <div className="flex flex-col items-center gap-2">
-            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-white">
+        <div className="absolute inset-0 flex items-center justify-center bg-slate-900/90 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            <p className="text-sm text-slate-300 font-medium">
               {retryCount > 0 ? `Connecting... (Attempt ${retryCount}/${maxRetries})` : 'Connecting...'}
             </p>
           </div>

@@ -16,18 +16,21 @@ const CameraGrid: React.FC<CameraGridProps> = ({ cameras, onToggleFullscreen }) 
   };
 
   return (
-    <div className={`grid grid-cols-1 ${getGridColumns(cameras.length)} gap-4 p-4`}>
-      {cameras.map((camera) => (
-        <div
-          key={camera.id}
-          className="transition-transform duration-200 hover:scale-[1.02]"
-        >
-          <CameraCard
-            camera={camera}
-            onToggleFullscreen={() => onToggleFullscreen?.(camera)}
-          />
-        </div>
-      ))}
+    <div className="relative">
+      <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-blue-500/5 to-pink-500/10 rounded-lg" />
+      <div className={`grid grid-cols-1 ${getGridColumns(cameras.length)} gap-6 p-6 relative`}>
+        {cameras.map((camera) => (
+          <div
+            key={camera.id}
+            className="transform transition-all duration-300 hover:scale-[1.02] hover:z-10"
+          >
+            <CameraCard
+              camera={camera}
+              onToggleFullscreen={() => onToggleFullscreen?.(camera)}
+            />
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
