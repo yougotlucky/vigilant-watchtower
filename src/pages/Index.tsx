@@ -47,9 +47,9 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary to-accent">
-      <header className="bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/75 sticky top-0 z-40 w-full border-b shadow-sm">
+      <header className="bg-primary/95 backdrop-blur supports-[backdrop-filter]:bg-primary/75 sticky top-0 z-40 w-full border-b shadow-sm">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
             CCTV Monitoring Dashboard
           </h1>
           <Sheet>
@@ -60,21 +60,21 @@ const Index = () => {
             </SheetTrigger>
             <SheetContent 
               side="right" 
-              className="w-full max-w-md sm:max-w-xl border-l border-accent/20 backdrop-blur-xl bg-card/95"
+              className="w-full max-w-md sm:max-w-xl border-l border-accent/20 backdrop-blur-xl bg-gradient-to-b from-primary/95 to-accent/95 text-primary-foreground"
             >
               <SheetHeader className="space-y-2">
-                <SheetTitle className="text-2xl font-bold">Settings</SheetTitle>
-                <SheetDescription>
+                <SheetTitle className="text-2xl font-bold text-primary-foreground">Settings</SheetTitle>
+                <SheetDescription className="text-primary-foreground/80">
                   Configure your cameras and notification preferences
                 </SheetDescription>
               </SheetHeader>
               <div className="mt-6 h-[calc(100vh-10rem)] overflow-hidden">
                 <Tabs defaultValue="cameras" className="h-full">
-                  <TabsList className="grid w-full grid-cols-2 mb-4">
-                    <TabsTrigger value="cameras" className="text-sm sm:text-base">
+                  <TabsList className="grid w-full grid-cols-2 mb-4 bg-accent/20">
+                    <TabsTrigger value="cameras" className="text-sm sm:text-base text-primary-foreground data-[state=active]:bg-secondary">
                       Cameras
                     </TabsTrigger>
-                    <TabsTrigger value="notifications" className="text-sm sm:text-base">
+                    <TabsTrigger value="notifications" className="text-sm sm:text-base text-primary-foreground data-[state=active]:bg-secondary">
                       Notifications
                     </TabsTrigger>
                   </TabsList>
@@ -96,7 +96,7 @@ const Index = () => {
         {!isAuthenticated ? (
           <LoginForm onLogin={setIsAuthenticated} />
         ) : fullscreenCamera ? (
-          <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm p-4">
+          <div className="fixed inset-0 z-50 bg-primary/95 backdrop-blur-sm p-4">
             <Button
               variant="outline"
               size="icon"
