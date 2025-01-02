@@ -45,61 +45,58 @@ const Index = () => {
     }));
   });
 
-  React.useEffect(() => {
-    const handleStorageChange = () => {
-      const savedCameras = localStorage.getItem('cameras');
-      if (savedCameras) {
-        setCameras(JSON.parse(savedCameras));
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
-
-  if (!isAuthenticated) {
-    return <LoginForm onLogin={setIsAuthenticated} />;
-  }
-
   return (
-    <div className="min-h-screen bg-background">
-      <header className="bg-card p-4 shadow-sm">
-        <div className="container mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold">CCTV Monitoring Dashboard</h1>
+    <div className="min-h-screen bg-gradient-to-br from-primary to-accent">
+      <header className="bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/75 sticky top-0 z-40 w-full border-b shadow-sm">
+        <div className="container mx-auto flex h-16 items-center justify-between px-4">
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
+            CCTV Monitoring Dashboard
+          </h1>
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="outline" size="icon">
+              <Button variant="outline" size="icon" className="relative hover:bg-accent/50">
                 <Settings className="h-5 w-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto">
-              <SheetHeader>
-                <SheetTitle>Settings</SheetTitle>
+            <SheetContent 
+              side="right" 
+              className="w-full max-w-md sm:max-w-xl border-l border-accent/20 backdrop-blur-xl bg-card/95"
+            >
+              <SheetHeader className="space-y-2">
+                <SheetTitle className="text-2xl font-bold">Settings</SheetTitle>
                 <SheetDescription>
                   Configure your cameras and notification preferences
                 </SheetDescription>
               </SheetHeader>
-              <div className="mt-6">
-                <Tabs defaultValue="cameras">
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="cameras">Cameras</TabsTrigger>
-                    <TabsTrigger value="notifications">Notifications</TabsTrigger>
+              <div className="mt-6 h-[calc(100vh-10rem)] overflow-hidden">
+                <Tabs defaultValue="cameras" className="h-full">
+                  <TabsList className="grid w-full grid-cols-2 mb-4">
+                    <TabsTrigger value="cameras" className="text-sm sm:text-base">
+                      Cameras
+                    </TabsTrigger>
+                    <TabsTrigger value="notifications" className="text-sm sm:text-base">
+                      Notifications
+                    </TabsTrigger>
                   </TabsList>
-                  <TabsContent value="cameras">
-                    <CameraSettings />
-                  </TabsContent>
-                  <TabsContent value="notifications" className="h-[calc(100vh-12rem)] overflow-y-auto">
-                    <NotificationSettings />
-                  </TabsContent>
+                  <div className="overflow-y-auto h-[calc(100%-3rem)] px-1">
+                    <TabsContent value="cameras" className="mt-0">
+                      <CameraSettings />
+                    </TabsContent>
+                    <TabsContent value="notifications" className="mt-0">
+                      <NotificationSettings />
+                    </TabsContent>
+                  </div>
                 </Tabs>
               </div>
             </SheetContent>
           </Sheet>
         </div>
       </header>
-      <main className="container mx-auto py-6">
-        {fullscreenCamera ? (
-          <div className="fixed inset-0 z-50 bg-background p-6">
+      <main className="container mx-auto py-6 px-4">
+        {!isAuthenticated ? (
+          <LoginForm onLogin={setIsAuthenticated} />
+        ) : fullscreenCamera ? (
+          <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm p-4">
             <Button
               variant="outline"
               size="icon"
@@ -109,7 +106,7 @@ const Index = () => {
               <span className="sr-only">Close fullscreen</span>
               ×
             </Button>
-            <div className="h-full">
+            <div className="h-full max-h-[calc(100vh-2rem)] rounded-lg overflow-hidden">
               <CameraCard
                 camera={fullscreenCamera}
                 isFullscreen={true}

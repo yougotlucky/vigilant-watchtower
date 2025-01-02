@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -9,23 +9,31 @@ import { useToast } from '@/hooks/use-toast';
 const NotificationSettings = () => {
   const { toast } = useToast();
   const [settings, setSettings] = React.useState({
-    telegramBotToken: localStorage.getItem('telegramBotToken') || '',
-    telegramChatId: localStorage.getItem('telegramChatId') || '',
-    emailServiceUrl: localStorage.getItem('emailServiceUrl') || '',
-    emailTo: localStorage.getItem('emailTo') || '',
-    whatsappApiUrl: localStorage.getItem('whatsappApiUrl') || '',
-    whatsappToken: localStorage.getItem('whatsappToken') || '',
-    whatsappTo: localStorage.getItem('whatsappTo') || '',
+    telegramBotToken: '',
+    telegramChatId: '',
+    emailServiceUrl: '',
+    emailTo: '',
+    whatsappApiUrl: '',
+    whatsappToken: '',
+    whatsappTo: '',
   });
 
+  // Load settings from localStorage on component mount
+  useEffect(() => {
+    const savedSettings = localStorage.getItem('notificationSettings');
+    if (savedSettings) {
+      setSettings(JSON.parse(savedSettings));
+    }
+  }, []);
+
   const handleSave = () => {
-    Object.entries(settings).forEach(([key, value]) => {
-      localStorage.setItem(key, value);
-    });
+    // Save all settings to localStorage as a single object
+    localStorage.setItem('notificationSettings', JSON.stringify(settings));
     
     toast({
       title: "Settings Saved",
       description: "Your notification settings have been saved successfully.",
+      duration: 3000,
     });
   };
 
@@ -38,9 +46,9 @@ const NotificationSettings = () => {
   };
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+    <Card className="border border-accent/20 bg-card/50 backdrop-blur-sm">
+      <CardHeader className="space-y-1">
+        <CardTitle className="flex items-center gap-2 text-xl">
           <Settings className="h-5 w-5" />
           Notification Settings
         </CardTitle>
@@ -64,7 +72,7 @@ const NotificationSettings = () => {
                 value={settings.telegramBotToken}
                 onChange={handleChange}
                 type="password"
-                className="font-mono"
+                className="font-mono bg-background/50 backdrop-blur-sm"
                 placeholder="Enter your Telegram bot token"
               />
             </div>
@@ -75,7 +83,7 @@ const NotificationSettings = () => {
                 name="telegramChatId"
                 value={settings.telegramChatId}
                 onChange={handleChange}
-                className="font-mono"
+                className="font-mono bg-background/50 backdrop-blur-sm"
                 placeholder="Enter your Telegram chat ID"
               />
             </div>
@@ -96,6 +104,7 @@ const NotificationSettings = () => {
                 name="emailServiceUrl"
                 value={settings.emailServiceUrl}
                 onChange={handleChange}
+                className="bg-background/50 backdrop-blur-sm"
                 placeholder="Enter your email service URL"
               />
             </div>
@@ -107,6 +116,7 @@ const NotificationSettings = () => {
                 value={settings.emailTo}
                 onChange={handleChange}
                 type="email"
+                className="bg-background/50 backdrop-blur-sm"
                 placeholder="Enter recipient email address"
               />
             </div>
@@ -127,6 +137,7 @@ const NotificationSettings = () => {
                 name="whatsappApiUrl"
                 value={settings.whatsappApiUrl}
                 onChange={handleChange}
+                className="bg-background/50 backdrop-blur-sm"
                 placeholder="Enter WhatsApp API URL"
               />
             </div>
@@ -138,6 +149,7 @@ const NotificationSettings = () => {
                 value={settings.whatsappToken}
                 onChange={handleChange}
                 type="password"
+                className="bg-background/50 backdrop-blur-sm"
                 placeholder="Enter WhatsApp API token"
               />
             </div>
@@ -148,13 +160,17 @@ const NotificationSettings = () => {
                 name="whatsappTo"
                 value={settings.whatsappTo}
                 onChange={handleChange}
+                className="bg-background/50 backdrop-blur-sm"
                 placeholder="Enter recipient WhatsApp number"
               />
             </div>
           </div>
         </div>
 
-        <Button onClick={handleSave} className="w-full">
+        <Button 
+          onClick={handleSave} 
+          className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white shadow-lg"
+        >
           Save Settings
         </Button>
       </CardContent>
