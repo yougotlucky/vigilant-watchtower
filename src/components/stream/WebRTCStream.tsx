@@ -21,11 +21,16 @@ const WebRTCStream = ({ streamId, onError, serverAddress }: WebRTCStreamProps) =
 
       console.log(`Connecting to stream ${streamId} at ${serverAddress}...`);
 
-      // Initialize WebRTC connection
+      // Initialize WebRTC connection with more ICE servers
       pcRef.current = new RTCPeerConnection({
         iceServers: [
-          { urls: 'stun:stun.l.google.com:19302' }
-        ]
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' },
+          { urls: 'stun:stun2.l.google.com:19302' },
+          { urls: 'stun:stun3.l.google.com:19302' },
+          { urls: 'stun:stun4.l.google.com:19302' }
+        ],
+        iceCandidatePoolSize: 10
       });
 
       // Set up media handlers
@@ -45,7 +50,13 @@ const WebRTCStream = ({ streamId, onError, serverAddress }: WebRTCStreamProps) =
         }
       };
 
-      // Create and send offer
+      pcRef.current.onicecandidate = (event) => {
+        if (event.candidate) {
+          console.log(`New ICE candidate for stream ${streamId}:`, event.candidate);
+        }
+      };
+
+      // Create and send offer with specific constraints
       const offer = await pcRef.current.createOffer({
         offerToReceiveVideo: true,
         offerToReceiveAudio: true
@@ -56,7 +67,8 @@ const WebRTCStream = ({ streamId, onError, serverAddress }: WebRTCStreamProps) =
       const response = await fetch(`${serverAddress}/stream/${streamId}/webrtc`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
         },
         body: JSON.stringify({
           sdp: offer.sdp,

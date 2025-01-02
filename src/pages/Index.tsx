@@ -6,7 +6,7 @@ import LoginForm from '@/components/auth/LoginForm';
 import { Camera } from '@/types/camera';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { Settings, Maximize2 } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -21,19 +21,19 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
+import CameraCard from '@/components/CameraCard';
 
 const Index = () => {
   const { toast } = useToast();
   const [isAuthenticated, setIsAuthenticated] = React.useState(() => 
     localStorage.getItem('isAuthenticated') === 'true'
   );
-  const [selectedCamera, setSelectedCamera] = React.useState<Camera | null>(null);
+  const [fullscreenCamera, setFullscreenCamera] = React.useState<Camera | null>(null);
   const [cameras, setCameras] = React.useState<Camera[]>(() => {
     const savedCameras = localStorage.getItem('cameras');
     if (savedCameras) {
       return JSON.parse(savedCameras);
     }
-    // Default to 4 cameras if none are saved
     return Array(4).fill(null).map((_, i) => ({
       id: i + 1,
       name: `Camera ${i + 1}`,
@@ -60,9 +60,6 @@ const Index = () => {
   if (!isAuthenticated) {
     return <LoginForm onLogin={setIsAuthenticated} />;
   }
-
-  const gridSize = Number(localStorage.getItem('gridSize')) || 2;
-  const maxCameras = gridSize * gridSize;
 
   return (
     <div className="min-h-screen bg-background">
@@ -91,7 +88,7 @@ const Index = () => {
                   <TabsContent value="cameras">
                     <CameraSettings />
                   </TabsContent>
-                  <TabsContent value="notifications">
+                  <TabsContent value="notifications" className="h-[calc(100vh-12rem)] overflow-y-auto">
                     <NotificationSettings />
                   </TabsContent>
                 </Tabs>
@@ -101,27 +98,29 @@ const Index = () => {
         </div>
       </header>
       <main className="container mx-auto py-6">
-        {selectedCamera ? (
-          <div className="relative">
+        {fullscreenCamera ? (
+          <div className="fixed inset-0 z-50 bg-background p-6">
             <Button
               variant="outline"
               size="icon"
-              className="absolute top-2 right-2 z-10"
-              onClick={() => setSelectedCamera(null)}
+              className="absolute top-4 right-4 z-10"
+              onClick={() => setFullscreenCamera(null)}
             >
-              <Maximize2 className="h-4 w-4" />
+              <span className="sr-only">Close fullscreen</span>
+              ×
             </Button>
-            <div className="aspect-video">
-              <CameraGrid
-                cameras={[selectedCamera]}
-                onCameraClick={setSelectedCamera}
+            <div className="h-full">
+              <CameraCard
+                camera={fullscreenCamera}
+                isFullscreen={true}
+                onToggleFullscreen={() => setFullscreenCamera(null)}
               />
             </div>
           </div>
         ) : (
           <CameraGrid
-            cameras={cameras.slice(0, maxCameras)}
-            onCameraClick={setSelectedCamera}
+            cameras={cameras}
+            onToggleFullscreen={setFullscreenCamera}
           />
         )}
       </main>

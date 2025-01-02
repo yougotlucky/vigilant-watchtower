@@ -46,27 +46,32 @@ const CameraCard: React.FC<CameraCardProps> = ({
         ]);
 
         toast({
-          title: "Notifications Sent",
-          description: "Alert notifications have been sent to all configured channels.",
+          title: "Alert Sent",
+          description: "Notification alerts have been sent to all configured channels.",
+          variant: "default"
         });
       } catch (error) {
         console.error('Failed to send notifications:', error);
         toast({
           variant: "destructive",
           title: "Notification Error",
-          description: "Failed to send notifications. Check your notification settings.",
+          description: "Failed to send alerts. Please check your notification settings.",
         });
       }
     }
   };
 
+  const containerClassName = isFullscreen 
+    ? "fixed inset-0 z-50 bg-background p-6" 
+    : "relative w-full h-full";
+
   const cardClassName = isFullscreen 
-    ? "fixed inset-4 z-50 bg-primary p-4 text-primary-foreground rounded-lg shadow-xl" 
-    : "bg-primary p-4 text-primary-foreground";
+    ? "h-full bg-card" 
+    : "bg-card";
 
   return (
     <Card className={cardClassName}>
-      <div className="flex justify-between items-start mb-4">
+      <div className="flex justify-between items-start p-4">
         <div>
           <h3 className="text-lg font-semibold">{camera.name}</h3>
           <StreamStatus
@@ -79,21 +84,21 @@ const CameraCard: React.FC<CameraCardProps> = ({
         </div>
         <div className="flex items-center gap-2">
           {(camera.status === 'error' || isStreamError) && (
-            <AlertCircle className="w-6 h-6 text-destructive animate-pulse-warning" />
+            <AlertCircle className="w-6 h-6 text-destructive animate-pulse" />
           )}
           {onToggleFullscreen && (
             <Button
               variant="ghost"
               size="icon"
               onClick={onToggleFullscreen}
-              className="hover:bg-primary-foreground/10"
+              className="hover:bg-accent"
             >
               <Maximize2 className="w-5 h-5" />
             </Button>
           )}
         </div>
       </div>
-      <div className={`relative ${isFullscreen ? 'h-[calc(100%-6rem)]' : 'aspect-video'} bg-black rounded-lg overflow-hidden`}>
+      <div className={`relative ${isFullscreen ? 'h-[calc(100%-8rem)]' : 'aspect-video'} bg-black rounded-lg overflow-hidden mx-4 mb-4`}>
         {camera.status === 'online' ? (
           <WebRTCStream
             streamId={camera.id}
@@ -106,7 +111,7 @@ const CameraCard: React.FC<CameraCardProps> = ({
           </div>
         )}
       </div>
-      <div className="mt-2 text-sm text-muted-foreground">
+      <div className="px-4 pb-4 text-sm text-muted-foreground">
         Last Updated: {new Date(camera.lastUpdate).toLocaleString()}
       </div>
     </Card>
