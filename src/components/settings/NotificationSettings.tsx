@@ -38,126 +38,127 @@ const NotificationSettings = () => {
   };
 
   return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Settings className="h-5 w-5" />
-            Notification Settings
-          </CardTitle>
-          <CardDescription>
-            Configure your notification preferences for camera alerts
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Telegram Settings */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5 text-blue-500" />
-              <h3 className="text-lg font-semibold">Telegram</h3>
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Settings className="h-5 w-5" />
+          Notification Settings
+        </CardTitle>
+        <CardDescription>
+          Configure your notification preferences for camera alerts
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Telegram Settings */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <MessageSquare className="h-5 w-5 text-blue-500" />
+            <h3 className="text-lg font-semibold">Telegram</h3>
+          </div>
+          <div className="grid gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="telegramBotToken">Bot Token</Label>
+              <Input
+                id="telegramBotToken"
+                name="telegramBotToken"
+                value={settings.telegramBotToken}
+                onChange={handleChange}
+                type="password"
+                className="font-mono"
+                placeholder="Enter your Telegram bot token"
+              />
             </div>
-            <div className="grid gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="telegramBotToken">Bot Token</Label>
-                <Input
-                  id="telegramBotToken"
-                  name="telegramBotToken"
-                  value={settings.telegramBotToken}
-                  onChange={handleChange}
-                  placeholder="Enter your Telegram bot token"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="telegramChatId">Chat ID</Label>
-                <Input
-                  id="telegramChatId"
-                  name="telegramChatId"
-                  value={settings.telegramChatId}
-                  onChange={handleChange}
-                  placeholder="Enter your Telegram chat ID"
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="telegramChatId">Chat ID</Label>
+              <Input
+                id="telegramChatId"
+                name="telegramChatId"
+                value={settings.telegramChatId}
+                onChange={handleChange}
+                className="font-mono"
+                placeholder="Enter your Telegram chat ID"
+              />
             </div>
           </div>
+        </div>
 
-          {/* Email Settings */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Mail className="h-5 w-5 text-green-500" />
-              <h3 className="text-lg font-semibold">Email</h3>
+        {/* Email Settings */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Mail className="h-5 w-5 text-green-500" />
+            <h3 className="text-lg font-semibold">Email</h3>
+          </div>
+          <div className="grid gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="emailServiceUrl">Service URL</Label>
+              <Input
+                id="emailServiceUrl"
+                name="emailServiceUrl"
+                value={settings.emailServiceUrl}
+                onChange={handleChange}
+                placeholder="Enter your email service URL"
+              />
             </div>
-            <div className="grid gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="emailServiceUrl">Service URL</Label>
-                <Input
-                  id="emailServiceUrl"
-                  name="emailServiceUrl"
-                  value={settings.emailServiceUrl}
-                  onChange={handleChange}
-                  placeholder="Enter your email service URL"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="emailTo">Recipient Email</Label>
-                <Input
-                  id="emailTo"
-                  name="emailTo"
-                  value={settings.emailTo}
-                  onChange={handleChange}
-                  type="email"
-                  placeholder="Enter recipient email address"
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="emailTo">Recipient Email</Label>
+              <Input
+                id="emailTo"
+                name="emailTo"
+                value={settings.emailTo}
+                onChange={handleChange}
+                type="email"
+                placeholder="Enter recipient email address"
+              />
             </div>
           </div>
+        </div>
 
-          {/* WhatsApp Settings */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <BellRing className="h-5 w-5 text-green-600" />
-              <h3 className="text-lg font-semibold">WhatsApp</h3>
+        {/* WhatsApp Settings */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <BellRing className="h-5 w-5 text-green-600" />
+            <h3 className="text-lg font-semibold">WhatsApp</h3>
+          </div>
+          <div className="grid gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="whatsappApiUrl">API URL</Label>
+              <Input
+                id="whatsappApiUrl"
+                name="whatsappApiUrl"
+                value={settings.whatsappApiUrl}
+                onChange={handleChange}
+                placeholder="Enter WhatsApp API URL"
+              />
             </div>
-            <div className="grid gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="whatsappApiUrl">API URL</Label>
-                <Input
-                  id="whatsappApiUrl"
-                  name="whatsappApiUrl"
-                  value={settings.whatsappApiUrl}
-                  onChange={handleChange}
-                  placeholder="Enter WhatsApp API URL"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="whatsappToken">Token</Label>
-                <Input
-                  id="whatsappToken"
-                  name="whatsappToken"
-                  value={settings.whatsappToken}
-                  onChange={handleChange}
-                  type="password"
-                  placeholder="Enter WhatsApp API token"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="whatsappTo">Recipient Number</Label>
-                <Input
-                  id="whatsappTo"
-                  name="whatsappTo"
-                  value={settings.whatsappTo}
-                  onChange={handleChange}
-                  placeholder="Enter recipient WhatsApp number"
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="whatsappToken">Token</Label>
+              <Input
+                id="whatsappToken"
+                name="whatsappToken"
+                value={settings.whatsappToken}
+                onChange={handleChange}
+                type="password"
+                placeholder="Enter WhatsApp API token"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="whatsappTo">Recipient Number</Label>
+              <Input
+                id="whatsappTo"
+                name="whatsappTo"
+                value={settings.whatsappTo}
+                onChange={handleChange}
+                placeholder="Enter recipient WhatsApp number"
+              />
             </div>
           </div>
+        </div>
 
-          <Button onClick={handleSave} className="w-full">
-            Save Settings
-          </Button>
-        </CardContent>
-      </Card>
-    </div>
+        <Button onClick={handleSave} className="w-full">
+          Save Settings
+        </Button>
+      </CardContent>
+    </Card>
   );
 };
 
