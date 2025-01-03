@@ -9,6 +9,7 @@ interface WebRTCStreamProps {
 const WebRTCStream = ({ streamId, onError, serverAddress }: WebRTCStreamProps) => {
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const pcRef = React.useRef<RTCPeerConnection | null>(null);
+  const wsRef = React.useRef<WebSocket | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [retryCount, setRetryCount] = React.useState(0);
   const maxRetries = 3;
@@ -18,10 +19,17 @@ const WebRTCStream = ({ streamId, onError, serverAddress }: WebRTCStreamProps) =
       if (pcRef.current) {
         pcRef.current.close();
       }
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
 
       console.log(`Connecting to stream ${streamId} at ${serverAddress}...`);
 
-      // Initialize WebRTC connection with more ICE servers
+      // Initialize WebSocket connection
+      const wsUrl = `${serverAddress.replace('http', 'ws')}/stream/channel/${streamId}/webrtc/ws`;
+      wsRef.current = new WebSocket(wsUrl);
+
+      // Initialize WebRTC connection with STUN/TURN servers
       pcRef.current = new RTCPeerConnection({
         iceServers: [
           { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] },
@@ -39,7 +47,7 @@ const WebRTCStream = ({ streamId, onError, serverAddress }: WebRTCStreamProps) =
       // Set up media handlers
       pcRef.current.ontrack = (event) => {
         console.log(`Received track for stream ${streamId}:`, event.streams[0]);
-        if (videoRef.current) {
+        if (videoRef.current && event.streams[0]) {
           videoRef.current.srcObject = event.streams[0];
           setIsLoading(false);
         }
@@ -53,38 +61,43 @@ const WebRTCStream = ({ streamId, onError, serverAddress }: WebRTCStreamProps) =
         }
       };
 
-      pcRef.current.onicecandidate = (event) => {
-        if (event.candidate) {
-          console.log(`New ICE candidate for stream ${streamId}:`, event.candidate);
+      // WebSocket message handling
+      wsRef.current.onmessage = async (event) => {
+        const data = JSON.parse(event.data);
+        
+        if (data.type === 'offer') {
+          await pcRef.current?.setRemoteDescription(new RTCSessionDescription(data));
+          const answer = await pcRef.current?.createAnswer();
+          await pcRef.current?.setLocalDescription(answer);
+          
+          wsRef.current?.send(JSON.stringify({
+            type: 'answer',
+            sdp: answer?.sdp
+          }));
+        } else if (data.type === 'candidate') {
+          await pcRef.current?.addIceCandidate(new RTCIceCandidate(data.candidate));
         }
       };
 
-      // Create and send offer
-      const offer = await pcRef.current.createOffer({
-        offerToReceiveVideo: true,
-        offerToReceiveAudio: true
-      });
-      
-      await pcRef.current.setLocalDescription(offer);
+      wsRef.current.onerror = (error) => {
+        console.error(`WebSocket error for stream ${streamId}:`, error);
+        handleStreamError();
+      };
 
-      const response = await fetch(`${serverAddress}/stream/${streamId}/webrtc`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        },
-        body: JSON.stringify({
-          sdp: offer.sdp,
-          type: offer.type
-        }),
-      });
+      wsRef.current.onclose = () => {
+        console.log(`WebSocket closed for stream ${streamId}`);
+        handleStreamError();
+      };
 
-      if (!response.ok) {
-        throw new Error(`WebRTC setup failed: ${response.status}`);
-      }
-
-      const answer = await response.json();
-      await pcRef.current.setRemoteDescription(new RTCSessionDescription(answer));
+      // Handle ICE candidates
+      pcRef.current.onicecandidate = (event) => {
+        if (event.candidate && wsRef.current?.readyState === WebSocket.OPEN) {
+          wsRef.current.send(JSON.stringify({
+            type: 'candidate',
+            candidate: event.candidate
+          }));
+        }
+      };
 
       console.log(`WebRTC connection established for stream ${streamId}`);
       setRetryCount(0);
@@ -112,6 +125,9 @@ const WebRTCStream = ({ streamId, onError, serverAddress }: WebRTCStreamProps) =
     return () => {
       if (pcRef.current) {
         pcRef.current.close();
+      }
+      if (wsRef.current) {
+        wsRef.current.close();
       }
     };
   }, [streamId]);

@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 
 const CameraSettings = () => {
   const { toast } = useToast();
-  const [serverUrl, setServerUrl] = React.useState(localStorage.getItem('serverUrl') || 'https://192.168.31.37:8080');
+  const [serverUrl, setServerUrl] = React.useState(localStorage.getItem('serverUrl') || 'http://localhost:8083');
   const [gridSize, setGridSize] = React.useState(Number(localStorage.getItem('gridSize')) || 2);
   const [cameras, setCameras] = React.useState<Camera[]>(() => {
     const savedCameras = localStorage.getItem('cameras');
@@ -51,15 +51,30 @@ const CameraSettings = () => {
     }
   };
 
-  const handleSave = () => {
-    localStorage.setItem('serverUrl', serverUrl);
-    localStorage.setItem('gridSize', gridSize.toString());
-    localStorage.setItem('cameras', JSON.stringify(cameras));
-    
-    toast({
-      title: "Settings Saved",
-      description: "Camera settings have been saved successfully.",
-    });
+  const handleSave = async () => {
+    try {
+      // Test RTSPtoWeb server connection
+      const response = await fetch(`${serverUrl}/api/streams`);
+      if (!response.ok) {
+        throw new Error('Failed to connect to RTSPtoWeb server');
+      }
+
+      localStorage.setItem('serverUrl', serverUrl);
+      localStorage.setItem('gridSize', gridSize.toString());
+      localStorage.setItem('cameras', JSON.stringify(cameras));
+      
+      toast({
+        title: "Settings Saved",
+        description: "Camera settings have been saved successfully.",
+      });
+    } catch (error) {
+      console.error('Failed to save settings:', error);
+      toast({
+        variant: "destructive",
+        title: "Connection Error",
+        description: "Failed to connect to RTSPtoWeb server. Please check the server URL.",
+      });
+    }
   };
 
   const updateCamera = (index: number, field: keyof Camera, value: any) => {
@@ -69,27 +84,28 @@ const CameraSettings = () => {
   };
 
   return (
-    <Card>
+    <Card className="border border-accent/20 bg-card/50 backdrop-blur-sm">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle className="flex items-center gap-2 text-xl text-primary-foreground">
           <LayoutGrid className="h-5 w-5" />
           Camera Settings ({cameras.length}/16 cameras)
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-2">
-          <Label>RTSPtoWeb Server URL</Label>
+          <Label className="text-primary-foreground">RTSPtoWeb Server URL</Label>
           <Input
             value={serverUrl}
             onChange={(e) => setServerUrl(e.target.value)}
-            placeholder="https://192.168.31.37:8080"
+            placeholder="http://localhost:8083"
+            className="bg-background/50 backdrop-blur-sm text-primary-foreground"
           />
         </div>
 
         <div className="space-y-2">
-          <Label>Grid Layout</Label>
+          <Label className="text-primary-foreground">Grid Layout</Label>
           <Select value={gridSize.toString()} onValueChange={(value) => setGridSize(Number(value))}>
-            <SelectTrigger>
+            <SelectTrigger className="bg-background/50 backdrop-blur-sm text-primary-foreground">
               <SelectValue placeholder="Select grid size" />
             </SelectTrigger>
             <SelectContent>
@@ -106,7 +122,7 @@ const CameraSettings = () => {
             size="icon" 
             onClick={handleAddCamera} 
             disabled={cameras.length >= 16}
-            className="hover:bg-secondary/10"
+            className="hover:bg-secondary/10 text-primary-foreground"
           >
             <Plus className="h-4 w-4" />
           </Button>
@@ -115,11 +131,11 @@ const CameraSettings = () => {
             size="icon" 
             onClick={handleRemoveCamera} 
             disabled={cameras.length <= 1}
-            className="hover:bg-secondary/10"
+            className="hover:bg-secondary/10 text-primary-foreground"
           >
             <Minus className="h-4 w-4" />
           </Button>
-          <span className="text-sm text-muted-foreground">
+          <span className="text-sm text-primary-foreground">
             {cameras.length} camera{cameras.length !== 1 ? 's' : ''} configured (max 16)
           </span>
         </div>
@@ -132,20 +148,20 @@ const CameraSettings = () => {
                   value={camera.name}
                   onChange={(e) => updateCamera(index, 'name', e.target.value)}
                   placeholder="Camera Name"
-                  className="bg-background"
+                  className="bg-background/50 backdrop-blur-sm text-primary-foreground"
                 />
               </div>
               <Input
                 value={camera.streamUrl}
                 onChange={(e) => updateCamera(index, 'streamUrl', e.target.value)}
-                placeholder="RTSP URL (e.g., rtsp://admin:Aleem%401125@192.168.31.49:554/cam/realmonitor?channel=1&subtype=0)"
-                className="bg-background"
+                placeholder="RTSP URL (e.g., rtsp://admin:password@192.168.1.100:554/stream1)"
+                className="bg-background/50 backdrop-blur-sm text-primary-foreground"
               />
             </div>
           ))}
         </div>
 
-        <Button onClick={handleSave} className="w-full">
+        <Button onClick={handleSave} className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white">
           <Save className="mr-2 h-4 w-4" />
           Save Settings
         </Button>
