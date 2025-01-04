@@ -23,19 +23,14 @@ const WebRTCStream = ({ streamId, onError, serverAddress }: WebRTCStreamProps) =
         wsRef.current.close();
       }
 
-      // Initialize WebSocket connection
+      // Initialize WebSocket connection to RTSPtoWeb
       const wsUrl = `${serverAddress.replace('http', 'ws')}/stream/channel/${streamId}/webrtc`;
       wsRef.current = new WebSocket(wsUrl);
 
       // Initialize WebRTC peer connection
       pcRef.current = new RTCPeerConnection({
         iceServers: [
-          { urls: ['stun:stun.l.google.com:19302'] },
-          {
-            urls: 'turn:turn.example.com:3478',
-            username: 'webrtc',
-            credential: 'turnserver'
-          }
+          { urls: ['stun:stun.l.google.com:19302'] }
         ]
       });
 
@@ -47,7 +42,7 @@ const WebRTCStream = ({ streamId, onError, serverAddress }: WebRTCStreamProps) =
         }
       };
 
-      // Handle ICE candidate events
+      // Handle ICE candidates
       pcRef.current.onicecandidate = (event) => {
         if (event.candidate && wsRef.current?.readyState === WebSocket.OPEN) {
           wsRef.current.send(JSON.stringify({
@@ -72,14 +67,6 @@ const WebRTCStream = ({ streamId, onError, serverAddress }: WebRTCStreamProps) =
           }));
         } else if (msg.type === 'candidate') {
           await pcRef.current?.addIceCandidate(new RTCIceCandidate(msg.data));
-        } else if (msg.type === 'error') {
-          console.error('Stream error:', msg.data);
-          toast({
-            variant: "destructive",
-            title: "Stream Error",
-            description: msg.data,
-          });
-          onError();
         }
       };
 
@@ -112,7 +99,7 @@ const WebRTCStream = ({ streamId, onError, serverAddress }: WebRTCStreamProps) =
   }, [streamId]);
 
   return (
-    <div className="relative w-full h-full bg-gradient-to-br from-slate-900 to-slate-950">
+    <div className="relative w-full h-full bg-gradient-to-br from-purple-900 to-blue-900">
       <video
         ref={videoRef}
         autoPlay
@@ -121,10 +108,10 @@ const WebRTCStream = ({ streamId, onError, serverAddress }: WebRTCStreamProps) =
         className="w-full h-full object-contain"
       />
       {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-slate-900/90 backdrop-blur-sm">
+        <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="flex flex-col items-center gap-3">
-            <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-slate-300 font-medium">
+            <div className="w-10 h-10 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" />
+            <p className="text-sm text-white font-medium">
               Connecting to stream...
             </p>
           </div>
