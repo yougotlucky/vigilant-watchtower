@@ -1,5 +1,4 @@
 import React from 'react';
-import { useToast } from "@/hooks/use-toast";
 
 interface WebRTCStreamProps {
   streamId: number;
@@ -12,9 +11,8 @@ const WebRTCStream = ({ streamId, onError, serverAddress }: WebRTCStreamProps) =
   const pcRef = React.useRef<RTCPeerConnection | null>(null);
   const wsRef = React.useRef<WebSocket | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
-  const { toast } = useToast();
-  const errorTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
-  const reconnectAttempts = React.useRef(0);
+  const [retryCount, setRetryCount] = React.useState(0);
+  const maxRetries = 3;
 
   const connectStream = async () => {
     try {
@@ -25,75 +23,100 @@ const WebRTCStream = ({ streamId, onError, serverAddress }: WebRTCStreamProps) =
         wsRef.current.close();
       }
 
-      const wsUrl = `${serverAddress.replace('http', 'ws')}/stream/channel/${streamId}/webrtc`;
+      console.log(`Connecting to stream ${streamId} at ${serverAddress}...`);
+
+      // Initialize WebSocket connection
+      const wsUrl = `${serverAddress.replace('http', 'ws')}/stream/channel/${streamId}/webrtc/ws`;
       wsRef.current = new WebSocket(wsUrl);
 
+      // Initialize WebRTC connection with STUN/TURN servers
       pcRef.current = new RTCPeerConnection({
         iceServers: [
-          { urls: ['stun:stun.l.google.com:19302'] }
-        ]
+          { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] },
+          {
+            urls: 'turn:turn.example.com:3478',
+            username: 'webrtc',
+            credential: 'turnserver'
+          }
+        ],
+        iceCandidatePoolSize: 10,
+        bundlePolicy: 'max-bundle',
+        rtcpMuxPolicy: 'require'
       });
 
+      // Set up media handlers
       pcRef.current.ontrack = (event) => {
+        console.log(`Received track for stream ${streamId}:`, event.streams[0]);
         if (videoRef.current && event.streams[0]) {
           videoRef.current.srcObject = event.streams[0];
           setIsLoading(false);
-          reconnectAttempts.current = 0; // Reset attempts on successful connection
         }
       };
 
-      pcRef.current.onicecandidate = (event) => {
-        if (event.candidate && wsRef.current?.readyState === WebSocket.OPEN) {
-          wsRef.current.send(JSON.stringify({
-            type: 'candidate',
-            data: event.candidate
-          }));
+      pcRef.current.oniceconnectionstatechange = () => {
+        console.log(`ICE connection state for stream ${streamId}:`, pcRef.current?.iceConnectionState);
+        if (pcRef.current?.iceConnectionState === 'failed' || 
+            pcRef.current?.iceConnectionState === 'disconnected') {
+          handleStreamError();
         }
       };
 
+      // WebSocket message handling
       wsRef.current.onmessage = async (event) => {
-        const msg = JSON.parse(event.data);
+        const data = JSON.parse(event.data);
         
-        if (msg.type === 'offer') {
-          await pcRef.current?.setRemoteDescription(new RTCSessionDescription(msg.data));
+        if (data.type === 'offer') {
+          await pcRef.current?.setRemoteDescription(new RTCSessionDescription(data));
           const answer = await pcRef.current?.createAnswer();
           await pcRef.current?.setLocalDescription(answer);
           
           wsRef.current?.send(JSON.stringify({
             type: 'answer',
-            data: answer
+            sdp: answer?.sdp
           }));
-        } else if (msg.type === 'candidate') {
-          await pcRef.current?.addIceCandidate(new RTCIceCandidate(msg.data));
+        } else if (data.type === 'candidate') {
+          await pcRef.current?.addIceCandidate(new RTCIceCandidate(data.candidate));
         }
       };
 
       wsRef.current.onerror = (error) => {
-        console.error('WebSocket error:', error);
-        // Only show error notification if we haven't shown one recently
-        if (!errorTimeoutRef.current) {
-          onError();
-          // Set a timeout to prevent showing another error for 30 seconds
-          errorTimeoutRef.current = setTimeout(() => {
-            errorTimeoutRef.current = null;
-          }, 30000);
-        }
+        console.error(`WebSocket error for stream ${streamId}:`, error);
+        handleStreamError();
       };
 
       wsRef.current.onclose = () => {
-        console.log('WebSocket closed, attempting to reconnect...');
-        reconnectAttempts.current++;
-        
-        // Exponential backoff for reconnection attempts
-        const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.current), 30000);
-        setTimeout(connectStream, delay);
+        console.log(`WebSocket closed for stream ${streamId}`);
+        handleStreamError();
       };
 
+      // Handle ICE candidates
+      pcRef.current.onicecandidate = (event) => {
+        if (event.candidate && wsRef.current?.readyState === WebSocket.OPEN) {
+          wsRef.current.send(JSON.stringify({
+            type: 'candidate',
+            candidate: event.candidate
+          }));
+        }
+      };
+
+      console.log(`WebRTC connection established for stream ${streamId}`);
+      setRetryCount(0);
     } catch (error) {
-      console.error('Stream connection error:', error);
-      if (!errorTimeoutRef.current) {
-        onError();
-      }
+      console.error(`Stream ${streamId} connection error:`, error);
+      handleStreamError();
+    }
+  };
+
+  const handleStreamError = () => {
+    if (retryCount < maxRetries) {
+      console.log(`Retrying stream ${streamId} connection in 5 seconds...`);
+      setTimeout(() => {
+        setRetryCount(prev => prev + 1);
+        connectStream();
+      }, 5000);
+    } else {
+      console.error(`Stream ${streamId} failed after ${maxRetries} attempts`);
+      onError();
     }
   };
 
@@ -106,14 +129,11 @@ const WebRTCStream = ({ streamId, onError, serverAddress }: WebRTCStreamProps) =
       if (wsRef.current) {
         wsRef.current.close();
       }
-      if (errorTimeoutRef.current) {
-        clearTimeout(errorTimeoutRef.current);
-      }
     };
   }, [streamId]);
 
   return (
-    <div className="relative w-full h-full bg-gradient-to-br from-purple-900 to-blue-900">
+    <div className="relative w-full h-full bg-gradient-to-br from-slate-900 to-slate-950">
       <video
         ref={videoRef}
         autoPlay
@@ -122,11 +142,11 @@ const WebRTCStream = ({ streamId, onError, serverAddress }: WebRTCStreamProps) =
         className="w-full h-full object-contain"
       />
       {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+        <div className="absolute inset-0 flex items-center justify-center bg-slate-900/90 backdrop-blur-sm">
           <div className="flex flex-col items-center gap-3">
-            <div className="w-10 h-10 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-white font-medium animate-pulse">
-              Connecting to stream...
+            <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            <p className="text-sm text-slate-300 font-medium">
+              {retryCount > 0 ? `Connecting... (Attempt ${retryCount}/${maxRetries})` : 'Connecting...'}
             </p>
           </div>
         </div>
