@@ -13,6 +13,8 @@ const WebRTCStream = ({ streamId, onError, serverAddress }: WebRTCStreamProps) =
   const wsRef = React.useRef<WebSocket | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const { toast } = useToast();
+  const errorTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const reconnectAttempts = React.useRef(0);
 
   const connectStream = async () => {
     try {
@@ -23,26 +25,23 @@ const WebRTCStream = ({ streamId, onError, serverAddress }: WebRTCStreamProps) =
         wsRef.current.close();
       }
 
-      // Initialize WebSocket connection to RTSPtoWeb
       const wsUrl = `${serverAddress.replace('http', 'ws')}/stream/channel/${streamId}/webrtc`;
       wsRef.current = new WebSocket(wsUrl);
 
-      // Initialize WebRTC peer connection
       pcRef.current = new RTCPeerConnection({
         iceServers: [
           { urls: ['stun:stun.l.google.com:19302'] }
         ]
       });
 
-      // Handle incoming tracks
       pcRef.current.ontrack = (event) => {
         if (videoRef.current && event.streams[0]) {
           videoRef.current.srcObject = event.streams[0];
           setIsLoading(false);
+          reconnectAttempts.current = 0; // Reset attempts on successful connection
         }
       };
 
-      // Handle ICE candidates
       pcRef.current.onicecandidate = (event) => {
         if (event.candidate && wsRef.current?.readyState === WebSocket.OPEN) {
           wsRef.current.send(JSON.stringify({
@@ -52,7 +51,6 @@ const WebRTCStream = ({ streamId, onError, serverAddress }: WebRTCStreamProps) =
         }
       };
 
-      // Handle WebSocket messages
       wsRef.current.onmessage = async (event) => {
         const msg = JSON.parse(event.data);
         
@@ -72,17 +70,30 @@ const WebRTCStream = ({ streamId, onError, serverAddress }: WebRTCStreamProps) =
 
       wsRef.current.onerror = (error) => {
         console.error('WebSocket error:', error);
-        onError();
+        // Only show error notification if we haven't shown one recently
+        if (!errorTimeoutRef.current) {
+          onError();
+          // Set a timeout to prevent showing another error for 30 seconds
+          errorTimeoutRef.current = setTimeout(() => {
+            errorTimeoutRef.current = null;
+          }, 30000);
+        }
       };
 
       wsRef.current.onclose = () => {
         console.log('WebSocket closed, attempting to reconnect...');
-        setTimeout(connectStream, 5000);
+        reconnectAttempts.current++;
+        
+        // Exponential backoff for reconnection attempts
+        const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.current), 30000);
+        setTimeout(connectStream, delay);
       };
 
     } catch (error) {
       console.error('Stream connection error:', error);
-      onError();
+      if (!errorTimeoutRef.current) {
+        onError();
+      }
     }
   };
 
@@ -94,6 +105,9 @@ const WebRTCStream = ({ streamId, onError, serverAddress }: WebRTCStreamProps) =
       }
       if (wsRef.current) {
         wsRef.current.close();
+      }
+      if (errorTimeoutRef.current) {
+        clearTimeout(errorTimeoutRef.current);
       }
     };
   }, [streamId]);
@@ -111,7 +125,7 @@ const WebRTCStream = ({ streamId, onError, serverAddress }: WebRTCStreamProps) =
         <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="flex flex-col items-center gap-3">
             <div className="w-10 h-10 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-white font-medium">
+            <p className="text-sm text-white font-medium animate-pulse">
               Connecting to stream...
             </p>
           </div>
